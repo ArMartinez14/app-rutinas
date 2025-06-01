@@ -3,20 +3,25 @@ from ver_rutinas import ver_rutinas
 from crear_rutinas import crear_rutinas
 
 def mostrar_menu():
-    # Eliminar espacio superior visualmente
+    st.set_page_config(page_title="Motion Center", layout="wide")
+
+    # Reducir el ancho de la barra lateral
     st.markdown("""
         <style>
-            .block-container {
-                padding-top: 1rem;
-            }
+        [data-testid="stSidebar"] {
+            min-width: 180px;
+            max-width: 180px;
+        }
         </style>
     """, unsafe_allow_html=True)
 
-    st.sidebar.image("data:image/png;base64," + st.secrets["LOGO_BASE64"], use_column_width=True)
+    st.sidebar.title("📋 Menú principal")
 
-    opcion = st.sidebar.selectbox("📋 ¿Qué deseas hacer?", ["Ver Rutinas", "Crear Rutinas"])
+    # Botones en lugar de selectbox
+    ver = st.sidebar.button("Ver Rutinas")
+    crear = st.sidebar.button("Crear Rutinas")
 
-    if opcion == "Ver Rutinas":
+    if ver:
         ver_rutinas()
-    elif opcion == "Crear Rutinas":
+    elif crear:
         crear_rutinas()
