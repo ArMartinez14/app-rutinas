@@ -99,43 +99,50 @@ def crear_rutinas():
     st.markdown("---")
 
     if st.button("Previsualizar rutina"):
-        for semana in range(int(semanas)):
-            fecha_semana = fecha_inicio + timedelta(weeks=semana)
-            fecha_str = fecha_semana.strftime("%Y-%m-%d")
-            st.subheader(f"Semana {semana+1} ({fecha_str})")
-            for i in range(len(dias)):
-                dia_nombre = dias[i]
-                dia_key = f"rutina_dia_{i+1}"
-                ejercicios = st.session_state.get(dia_key, [])
+        semana_tabs = st.tabs([f"Semana {i+1}" for i in range(int(semanas))])
 
-                st.markdown(f"**{dia_nombre}**")
-                data = []
-                for ejercicio in ejercicios:
-                    ejercicio_mod = ejercicio.copy()
-                    nombre_prog = ejercicio["Progresión"].strip()
-                    if nombre_prog:
-                        doc_prog = db.collection("progresiones").document(nombre_prog).get()
-                        if doc_prog.exists:
-                            prog = doc_prog.to_dict()
-                            variable = prog.get("variable", "").lower()
-                            incremento = float(prog.get("incremento", 0))
-                            operacion = prog.get("operacion", "").lower()
-                            periodo = int(prog.get("periodo", 1))
-                            if variable in ejercicio_mod:
-                                valor_base = ejercicio[variable].strip()
-                                ejercicio_mod[variable] = aplicar_progresion(valor_base, semana, incremento, operacion, periodo)
+        for semana_idx, tab_semana in enumerate(semana_tabs):
+            with tab_semana:
+                fecha_semana = fecha_inicio + timedelta(weeks=semana_idx)
+                fecha_str = fecha_semana.strftime("%Y-%m-%d")
+                st.caption(f"Inicio de semana: {fecha_str}")
 
-                    data.append({
-                        "Circuito": ejercicio_mod["Circuito"],
-                        "Ejercicio": ejercicio_mod["Ejercicio"],
-                        "Series": ejercicio_mod["Series"],
-                        "Repeticiones": ejercicio_mod["Repeticiones"],
-                        "Peso": ejercicio_mod["Peso"],
-                        "Velocidad": ejercicio_mod["Velocidad"],
-                        "RIR": ejercicio_mod["RIR"],
-                        "Tipo": ejercicio_mod["Tipo"]
-                    })
-                if data:
-                    st.dataframe(data, use_container_width=True)
+                dia_tabs = st.tabs(dias)
+                for i, tab_dia in enumerate(dia_tabs):
+                    with tab_dia:
+                        dia_nombre = dias[i]
+                        dia_key = f"rutina_dia_{i+1}"
+                        ejercicios = st.session_state.get(dia_key, [])
+
+                        data = []
+                        for ejercicio in ejercicios:
+                            ejercicio_mod = ejercicio.copy()
+                            nombre_prog = ejercicio["Progresión"].strip()
+                            if nombre_prog:
+                                doc_prog = db.collection("progresiones").document(nombre_prog).get()
+                                if doc_prog.exists:
+                                    prog = doc_prog.to_dict()
+                                    variable = prog.get("variable", "").lower()
+                                    incremento = float(prog.get("incremento", 0))
+                                    operacion = prog.get("operacion", "").lower()
+                                    periodo = int(prog.get("periodo", 1))
+                                    if variable in ejercicio_mod:
+                                        valor_base = ejercicio[variable].strip()
+                                        ejercicio_mod[variable] = aplicar_progresion(valor_base, semana_idx, incremento, operacion, periodo)
+
+                            data.append({
+                                "Circuito": ejercicio_mod["Circuito"],
+                                "Sección": ejercicio_mod["Sección"],
+                                "Ejercicio": ejercicio_mod["Ejercicio"],
+                                "Series": ejercicio_mod["Series"],
+                                "Repeticiones": ejercicio_mod["Repeticiones"],
+                                "Peso": ejercicio_mod["Peso"],
+                                "Velocidad": ejercicio_mod["Velocidad"],
+                                "RIR": ejercicio_mod["RIR"],
+                                "Tipo": ejercicio_mod["Tipo"]
+                            })
+
+                        if data:
+                            st.dataframe(data, use_container_width=True)
 
     st.markdown("---")
