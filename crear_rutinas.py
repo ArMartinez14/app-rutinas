@@ -4,7 +4,7 @@ import firebase_admin
 from datetime import datetime
 
 # === CONFIGURACIÓN DE LA PÁGINA (debe ir al inicio del primer archivo ejecutado) ===
-st.set_page_config(page_title="Motion Center", layout="wide")
+#st.set_page_config(page_title="Motion Center", layout="wide")
 
 # === INICIALIZAR FIREBASE ===
 if not firebase_admin._apps:
