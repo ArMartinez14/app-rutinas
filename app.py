@@ -4,16 +4,16 @@ from crear_rutinas import crear_rutinas
 
 st.set_page_config(page_title="Motion Center", layout="wide")
 
-st.sidebar.title("Menú Principal")
+# Título del sidebar
+st.sidebar.title("Menú principal")
 
-col1, col2 = st.sidebar.columns(1)
-
-if col1.button("Ver Rutinas"):
+# Botones como menú lateral
+if st.sidebar.button("Ver Rutinas"):
     st.session_state['opcion'] = "Ver Rutinas"
-elif col2.button("Crear Rutinas"):
+if st.sidebar.button("Crear Rutinas"):
     st.session_state['opcion'] = "Crear Rutinas"
 
-# Mostrar opción seleccionada o mensaje de bienvenida
+# Mostrar la opción seleccionada o el mensaje de bienvenida
 if 'opcion' in st.session_state:
     if st.session_state['opcion'] == "Ver Rutinas":
         ver_rutinas()
