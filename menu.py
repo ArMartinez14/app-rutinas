@@ -3,7 +3,7 @@ from ver_rutinas import ver_rutinas
 from crear_rutinas import crear_rutinas
 
 def mostrar_menu():
-    st.image("logo_motion.png", use_column_width=True)
+    st.set_page_config(page_title="Motion Center", layout="centered")
     opcion = st.selectbox("📋 ¿Qué deseas hacer?", ["Ver Rutinas", "Crear Rutinas"])
 
     if opcion == "Ver Rutinas":
