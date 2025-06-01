@@ -1,13 +1,16 @@
 import streamlit as st
 from firebase_admin import credentials, firestore
 import firebase_admin
-from datetime import datetime, timedelta
+from datetime import datetime
+import json  # <-- este import es necesario
 
+# === INICIALIZAR FIREBASE ===
 if not firebase_admin._apps:
-    cred = credentials.Certificate(st.secrets["FIREBASE_CREDENTIALS"])
+    cred = credentials.Certificate(json.loads(st.secrets["FIREBASE_CREDENTIALS"]))  # <-- cambio aquí
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
+
 
 def crear_rutinas():
     st.title("📅 Crear nueva rutina")
