@@ -4,7 +4,6 @@ from crear_rutinas import crear_rutinas
 
 def mostrar_menu():
     # 👇 Esta configuración debe ir siempre al inicio
-    st.set_page_config(page_title="Motion Center", layout="wide")
 
     # 📌 Mostrar logo desde base64 si existe
     if "LOGO_BASE64" in st.secrets:
