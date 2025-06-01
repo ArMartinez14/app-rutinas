@@ -1,7 +1,7 @@
 import streamlit as st
 from firebase_admin import credentials, firestore
 import firebase_admin
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # === INICIALIZAR FIREBASE ===
 if not firebase_admin._apps:
@@ -21,7 +21,6 @@ def crear_rutinas():
     # === INPUT DE NOMBRE CON SUGERENCIAS ===
     nombre_input = st.text_input("Escribe el nombre del cliente:")
     coincidencias = [n for n in nombres if nombre_input.lower() in n.lower()]
-
     nombre_sel = st.selectbox("Selecciona de la lista:", coincidencias) if coincidencias else ""
 
     # === AUTOCOMPLETAR CORREO ===
@@ -75,4 +74,48 @@ def crear_rutinas():
                 fila["Tipo"] = cols[9].text_input("Tipo", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
 
     st.markdown("---")
-    st.button("Generar rutina completa")  # Aún no implementado
+
+    if st.button("Generar rutina completa"):
+        if not nombre_sel or not correo or not entrenador:
+            st.warning("Faltan datos obligatorios: nombre, correo o entrenador.")
+            return
+
+        try:
+            for semana in range(int(semanas)):
+                fecha_semana = fecha_inicio + timedelta(weeks=semana)
+                fecha_str = fecha_semana.strftime("%d/%m/%Y")
+                fecha_normalizada = fecha_semana.strftime("%Y_%m_%d")
+                correo_normalizado = correo.replace("@", "_").replace(".", "_")
+
+                for i in range(len(dias)):
+                    dia_nombre = dias[i]
+                    dia_key = f"rutina_dia_{i+1}"
+                    ejercicios = st.session_state.get(dia_key, [])
+
+                    for ejercicio in ejercicios:
+                        doc_id = f"{correo_normalizado}_{fecha_normalizada}_{dia_nombre}_{ejercicio['Circuito']}_{ejercicio['Ejercicio']}".lower().replace(" ", "_")
+
+                        data = {
+                            "Nombre": nombre_sel,
+                            "Correo": correo,
+                            "Semana": str(semana + 1),
+                            "Fecha Inicio Semana": fecha_str,
+                            "Día": dia_nombre,
+                            "Sección": ejercicio["Sección"],
+                            "Circuito": ejercicio["Circuito"],
+                            "Ejercicio": ejercicio["Ejercicio"],
+                            "Series": ejercicio["Series"],
+                            "Repeticiones": ejercicio["Repeticiones"],
+                            "Peso": ejercicio["Peso"],
+                            "Velocidad": ejercicio["Velocidad"],
+                            "RIR": ejercicio["RIR"],
+                            "Progresión": ejercicio["Progresión"],
+                            "Tipo": ejercicio["Tipo"],
+                            "Entrenador": entrenador
+                        }
+
+                        db.collection("rutinas").document(doc_id).set(data)
+
+            st.success(f"\u2705 Rutina generada correctamente para {semanas} semanas.")
+        except Exception as e:
+            st.error(f"\u274C Error al guardar la rutina: {e}")
