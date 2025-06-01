@@ -40,7 +40,8 @@ def crear_rutinas():
     tabs = st.tabs(dias)
 
     columnas_tabla = [
-        "Circuito", "Sección", "Nombre Ejercicio", "Series", "Repeticiones", "Peso", "Velocidad", "RIR", "Progresión", "Tipo"
+        "Circuito", "Sección", "Ejercicio", "Series", "Repeticiones",
+        "Peso", "Velocidad", "RIR", "Progresión", "Tipo"
     ]
 
     for i, tab in enumerate(tabs):
@@ -57,10 +58,14 @@ def crear_rutinas():
 
             for idx, fila in enumerate(st.session_state[dia_key]):
                 cols = st.columns(len(columnas_tabla))
-                fila["Circuito"] = cols[0].selectbox("Circuito", ["A", "B", "C", "D", "E", "F", "G"], index=["A", "B", "C", "D", "E", "F", "G"].index(fila["Circuito"]) if fila["Circuito"] else 0, key=f"circ_{i}_{idx}")
-                fila["Sección"] = "Warm-up" if fila["Circuito"] in ["A", "B", "C"] else "Workout"
+
+                fila["Circuito"] = cols[0].selectbox("Circuito", ["A", "B", "C", "D", "E", "F", "G"],
+                                                    index=["A", "B", "C", "D", "E", "F", "G"].index(fila["Circuito"]) if fila["Circuito"] else 0,
+                                                    key=f"circ_{i}_{idx}")
+                fila["Sección"] = "Warm Up" if fila["Circuito"] in ["A", "B", "C"] else "Work Out"
                 cols[1].markdown(f"**{fila['Sección']}**")
-                fila["Nombre Ejercicio"] = cols[2].text_input("Nombre Ejercicio", value=fila["Nombre Ejercicio"], key=f"ej_{i}_{idx}")
+
+                fila["Ejercicio"] = cols[2].text_input("Ejercicio", value=fila["Ejercicio"], key=f"ej_{i}_{idx}")
                 fila["Series"] = cols[3].number_input("Series", min_value=1, max_value=10, value=int(fila["Series"] or 3), key=f"ser_{i}_{idx}")
                 fila["Repeticiones"] = cols[4].text_input("Reps", value=fila["Repeticiones"], key=f"rep_{i}_{idx}")
                 fila["Peso"] = cols[5].text_input("Peso", value=fila["Peso"], key=f"peso_{i}_{idx}")
