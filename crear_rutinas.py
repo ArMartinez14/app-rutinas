@@ -16,26 +16,17 @@ def crear_rutinas():
     # Obtener lista de usuarios
     docs = db.collection("usuarios").stream()
     usuarios = [doc.to_dict() for doc in docs if doc.exists]
+
     nombres = sorted(set(u.get("nombre", "") for u in usuarios))
-
-    # Nombre del cliente con sugerencias
-    if "nombre_cliente" not in st.session_state:
-        st.session_state.nombre_cliente = ""
-    if "correo_cliente" not in st.session_state:
-        st.session_state.correo_cliente = ""
-
-    nombre_input = st.text_input("👤 Nombre del cliente:", value=st.session_state.nombre_cliente)
-
+    nombre_input = st.text_input("👤 Nombre del cliente:")
     coincidencias = [n for n in nombres if nombre_input.lower() in n.lower()]
     nombre_sel = st.selectbox("O selecciona de la lista:", coincidencias if coincidencias else nombres)
 
-    if nombre_sel and nombre_sel != st.session_state.nombre_cliente:
-        st.session_state.nombre_cliente = nombre_sel
-        st.session_state.correo_cliente = next((u["correo"] for u in usuarios if u.get("nombre") == nombre_sel), "")
+    # Inicializar el correo con valor vacío y asignar si hay coincidencia
+    correo_auto = ""
+    if nombre_sel:
+        correo_auto = next((u.get("correo", "") for u in usuarios if u.get("nombre") == nombre_sel), "")
 
-    correo = st.text_input("✉️ Correo del cliente:", value=st.session_state.correo_cliente)
-
-    # Mostrar el correo automáticamente
     correo = st.text_input("✉️ Correo del cliente:", value=correo_auto)
 
     fecha_inicio = st.date_input("📆 Fecha de inicio de rutina:", value=datetime.today())
