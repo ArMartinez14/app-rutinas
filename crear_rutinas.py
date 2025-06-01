@@ -2,30 +2,33 @@ import streamlit as st
 from firebase_admin import credentials, firestore
 import firebase_admin
 from datetime import datetime
-import json  # <-- este import es necesario
 
 # === INICIALIZAR FIREBASE ===
 if not firebase_admin._apps:
-    cred = credentials.Certificate(json.loads(st.secrets["FIREBASE_CREDENTIALS"]))  # <-- cambio aquí
+    cred = credentials.Certificate(st.secrets["FIREBASE_CREDENTIALS"])
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
-
 def crear_rutinas():
     st.title("📅 Crear nueva rutina")
 
-    # === Obtener usuarios ===
+    # === OBTENER USUARIOS DESDE FIRESTORE ===
     docs = db.collection("usuarios").stream()
     usuarios = [doc.to_dict() for doc in docs if doc.exists]
     nombres = sorted(set(u.get("nombre", "") for u in usuarios))
 
-    # === Inputs principales ===
+    # === INPUT DE NOMBRE CON SUGERENCIAS ===
     nombre_input = st.text_input("👤 Escribe el nombre del cliente:")
     coincidencias = [n for n in nombres if nombre_input.lower() in n.lower()]
+
     nombre_sel = st.selectbox("🔎 Selecciona de la lista:", coincidencias) if coincidencias else ""
+
+    # === AUTOCOMPLETAR CORREO ===
     correo_auto = next((u.get("correo", "") for u in usuarios if u.get("nombre") == nombre_sel), "")
     correo = st.text_input("✉️ Correo del cliente:", value=correo_auto)
+
+    # === OTROS CAMPOS ===
     fecha_inicio = st.date_input("📆 Fecha de inicio de rutina:", value=datetime.today())
     semanas = st.number_input("🔁 Semanas de duración:", min_value=1, max_value=12, value=4)
     entrenador = st.text_input("🏋️ Nombre del entrenador responsable:")
@@ -36,6 +39,10 @@ def crear_rutinas():
     dias = ["Día 1", "Día 2", "Día 3", "Día 4", "Día 5"]
     tabs = st.tabs(dias)
 
+    columnas_tabla = [
+        "Circuito", "Nombre Ejercicio", "Series", "Repeticiones", "Peso", "Velocidad", "RIR", "Tipo Ejercicio", "Progresión"
+    ]
+
     for i, tab in enumerate(tabs):
         with tab:
             dia_key = f"rutina_dia_{i+1}"
@@ -44,61 +51,31 @@ def crear_rutinas():
 
             st.write(f"Ejercicios para {dias[i]}")
 
-            circuito = st.selectbox("🔤 Circuito", ["A", "B", "C", "D", "E", "F"], key=f"circuito_{i}")
-            ejercicio = st.text_input("🏋️ Nombre del ejercicio", key=f"ejercicio_{i}")
-            series = st.number_input("🔁 Series", min_value=1, max_value=10, value=3, key=f"series_{i}")
-            repeticiones = st.text_input("🔢 Repeticiones", key=f"reps_{i}")
-            peso = st.text_input("🏋️ Peso (kg)", key=f"peso_{i}")
-            tipo = st.text_input("📘 Tipo (ej. fuerza, movilidad…)", key=f"tipo_{i}")
-            progresion = st.text_input("📈 Nombre progresión", key=f"prog_{i}")
+            nueva_fila = {}
+            cols = st.columns(len(columnas_tabla))
+            keys = ["circuito", "ejercicio", "series", "repeticiones", "peso", "velocidad", "rir", "tipo", "progresion"]
+            tipos_input = [
+                lambda: cols[0].selectbox("Circuito", ["A", "B", "C", "D", "E", "F"], key=f"circuito_{i}"),
+                lambda: cols[1].text_input("Nombre Ejercicio", key=f"ejercicio_{i}"),
+                lambda: cols[2].number_input("Series", min_value=1, max_value=10, value=3, key=f"series_{i}"),
+                lambda: cols[3].text_input("Repeticiones", key=f"reps_{i}"),
+                lambda: cols[4].text_input("Peso (kg)", key=f"peso_{i}"),
+                lambda: cols[5].text_input("Velocidad", key=f"vel_{i}"),
+                lambda: cols[6].text_input("RIR", key=f"rir_{i}"),
+                lambda: cols[7].text_input("Tipo Ejercicio", key=f"tipo_{i}"),
+                lambda: cols[8].text_input("Progresión", key=f"prog_{i}")
+            ]
+
+            for k, func in zip(keys, tipos_input):
+                nueva_fila[k] = func()
 
             if st.button(f"💾 Guardar {dias[i]}", key=f"guardar_{i}"):
-                st.session_state[dia_key].append({
-                    "circuito": circuito,
-                    "ejercicio": ejercicio,
-                    "series": series,
-                    "repeticiones": repeticiones,
-                    "peso": peso,
-                    "tipo": tipo,
-                    "progresion": progresion
-                })
-                st.success("✅ Ejercicio guardado")
+                st.session_state[dia_key].append(nueva_fila)
+                st.success("Ejercicio guardado en memoria")
 
             if st.session_state[dia_key]:
                 st.markdown("### ✅ Ejercicios guardados")
-                for idx, ex in enumerate(st.session_state[dia_key]):
-                    st.markdown(f"{idx+1}. **{ex['circuito']} - {ex['ejercicio']}**: {ex['series']}x{ex['repeticiones']} @ {ex['peso']}kg")
+                st.table(st.session_state[dia_key])
 
     st.markdown("---")
-
-    if st.button("🚀 Generar rutina completa"):
-        fecha_lunes = fecha_inicio - timedelta(days=fecha_inicio.weekday())
-        fecha_lunes_str = fecha_lunes.strftime("%Y-%m-%d")
-
-        total_subidos = 0
-        for i in range(5):
-            dia = i + 1
-            ejercicios = st.session_state.get(f"rutina_dia_{dia}", [])
-            for ex in ejercicios:
-                doc_id = f"{correo.replace('@', '_').replace('.', '_')}_{fecha_lunes_str.replace('-', '_')}_{dia}_{ex['circuito']}_{ex['ejercicio']}".lower().replace(" ", "_")
-                db.collection("rutinas").document(doc_id).set({
-                    "cliente": nombre_sel,
-                    "correo": correo,
-                    "fecha_lunes": fecha_lunes_str,
-                    "dia": str(dia),
-                    "bloque": "Workout",
-                    "circuito": ex["circuito"],
-                    "ejercicio": ex["ejercicio"],
-                    "series": ex["series"],
-                    "repeticiones": ex["repeticiones"],
-                    "peso": ex["peso"],
-                    "tipo": ex["tipo"],
-                    "progresion": ex["progresion"],
-                    "registro_series": [],
-                    "comentario": "",
-                    "video": "",
-                    "entrenador": entrenador
-                })
-                total_subidos += 1
-
-        st.success(f"✅ Rutina generada y guardada correctamente ({total_subidos} ejercicios subidos a Firestore).")
+    st.button("🚀 Generar rutina completa")  # Aún no implementado
