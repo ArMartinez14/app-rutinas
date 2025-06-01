@@ -34,3 +34,7 @@ def mostrar_menu():
                 <p style='color: gray;'>Selecciona una opción del menú para comenzar</p>
             </div>
         """.format(st.secrets["LOGO_BASE64"].strip()), unsafe_allow_html=True)
+
+# Ejecutar el menú si este archivo es app.py
+if __name__ == "__main__":
+    mostrar_menu()
