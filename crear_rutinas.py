@@ -45,37 +45,42 @@ def crear_rutinas():
 
     for i, tab in enumerate(tabs):
         with tab:
-            dia_key = f"rutina_dia_{i+1}"
+            dia_key = f"rutina_dia_{i + 1}"
             if dia_key not in st.session_state:
                 st.session_state[dia_key] = []
 
-            st.write(f"Ejercicios para {dias[i]}")
+            st.write(f"📝 Ingresar ejercicios para {dias[i]}")
+            st.markdown("**Completa la fila siguiente y guarda cada ejercicio individualmente:**")
 
-            nueva_fila = {}
-            cols = st.columns(len(columnas_tabla))
-            keys = ["circuito", "ejercicio", "series", "repeticiones", "peso", "velocidad", "rir", "tipo", "progresion"]
-            tipos_input = [
-                lambda: cols[0].selectbox("Circuito", ["A", "B", "C", "D", "E", "F"], key=f"circuito_{i}"),
-                lambda: cols[1].text_input("Nombre Ejercicio", key=f"ejercicio_{i}"),
-                lambda: cols[2].number_input("Series", min_value=1, max_value=10, value=3, key=f"series_{i}"),
-                lambda: cols[3].text_input("Repeticiones", key=f"reps_{i}"),
-                lambda: cols[4].text_input("Peso (kg)", key=f"peso_{i}"),
-                lambda: cols[5].text_input("Velocidad", key=f"vel_{i}"),
-                lambda: cols[6].text_input("RIR", key=f"rir_{i}"),
-                lambda: cols[7].text_input("Tipo Ejercicio", key=f"tipo_{i}"),
-                lambda: cols[8].text_input("Progresión", key=f"prog_{i}")
-            ]
+            # Mostrar inputs en una sola fila horizontal tipo tabla
+            cols = st.columns(9)
+            circuito = cols[0].selectbox("Circuito", ["A", "B", "C", "D", "E", "F"], key=f"circ_{i}")
+            ejercicio = cols[1].text_input("Ejercicio", key=f"ej_{i}")
+            series = cols[2].number_input("Series", min_value=1, max_value=10, value=3, key=f"ser_{i}")
+            repes = cols[3].text_input("Reps", key=f"rep_{i}")
+            peso = cols[4].text_input("Peso", key=f"pes_{i}")
+            velocidad = cols[5].text_input("Vel", key=f"vel_{i}")
+            rir = cols[6].text_input("RIR", key=f"rir_{i}")
+            tipo = cols[7].text_input("Tipo", key=f"tipo_{i}")
+            prog = cols[8].text_input("Progresión", key=f"prog_{i}")
 
-            for k, func in zip(keys, tipos_input):
-                nueva_fila[k] = func()
-
-            if st.button(f"💾 Guardar {dias[i]}", key=f"guardar_{i}"):
-                st.session_state[dia_key].append(nueva_fila)
-                st.success("Ejercicio guardado en memoria")
+            if st.button(f"💾 Guardar fila {dias[i]}", key=f"guardar_fila_{i}"):
+                st.session_state[dia_key].append({
+                    "circuito": circuito,
+                    "ejercicio": ejercicio,
+                    "series": series,
+                    "repeticiones": repes,
+                    "peso": peso,
+                    "velocidad": velocidad,
+                    "rir": rir,
+                    "tipo": tipo,
+                    "progresion": prog
+                })
+                st.success("✅ Ejercicio agregado al día.")
 
             if st.session_state[dia_key]:
                 st.markdown("### ✅ Ejercicios guardados")
-                st.table(st.session_state[dia_key])
+                st.dataframe(st.session_state[dia_key], use_container_width=True)
 
     st.markdown("---")
     st.button("🚀 Generar rutina completa")  # Aún no implementado
