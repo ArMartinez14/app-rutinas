@@ -1,16 +1,12 @@
+import streamlit as st
 from ver_rutinas import ver_rutinas
 from crear_rutinas import crear_rutinas
-import streamlit as st
 
-def mostrar_menu():
-    st.sidebar.title("🏋️ Menú principal")
-    opciones = ["🏠 Inicio", "👀 Ver Rutinas", "✏️ Crear Rutina"]
-    eleccion = st.sidebar.radio("¿Qué deseas hacer?", opciones)
+st.sidebar.title("Menú Principal")
+opcion = st.sidebar.radio("Selecciona una opción:", ["Ver Rutinas", "Crear Rutinas"])
 
-    if eleccion == "🏠 Inicio":
-        st.title("Bienvenido a Motion Center")
-        st.markdown("Selecciona una opción del menú para comenzar.")
-    elif eleccion == "👀 Ver Rutinas":
-        ver_rutinas()
-    elif eleccion == "✏️ Crear Rutina":
-        crear_rutinas()
+if opcion == "Ver Rutinas":
+    ver_rutinas()
+elif opcion == "Crear Rutinas":
+    crear_rutinas()
+
