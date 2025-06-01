@@ -10,6 +10,24 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 
+# === FUNCION DE PROGRESIÓN ===
+def aplicar_progresion(valor_inicial, semana, incremento, operacion, periodo):
+    try:
+        if semana == 0:
+            return valor_inicial  # semana base
+
+        if semana % periodo != 0:
+            return valor_inicial
+
+        if operacion == "suma":
+            return str(float(valor_inicial) + incremento)
+        elif operacion == "multiplicacion":
+            return str(float(valor_inicial) * incremento)
+        else:
+            return valor_inicial
+    except:
+        return valor_inicial
+
 def crear_rutinas():
     st.title("Crear nueva rutina")
 
@@ -75,6 +93,54 @@ def crear_rutinas():
 
     st.markdown("---")
 
+    if st.button("Previsualizar rutina"):
+        rutina_preview = []
+        for semana in range(int(semanas)):
+            fecha_semana = fecha_inicio + timedelta(weeks=semana)
+            fecha_str = fecha_semana.strftime("%d/%m/%Y")
+
+            for i in range(len(dias)):
+                dia_nombre = dias[i]
+                dia_key = f"rutina_dia_{i+1}"
+                ejercicios = st.session_state.get(dia_key, [])
+
+                for ejercicio in ejercicios:
+                    ejercicio_mod = ejercicio.copy()
+                    nombre_prog = ejercicio["Progresión"].strip()
+
+                    if nombre_prog:
+                        doc_prog = db.collection("progresiones").document(nombre_prog).get()
+                        if doc_prog.exists:
+                            prog = doc_prog.to_dict()
+                            variable = prog.get("variable", "").lower()
+                            incremento = float(prog.get("incremento", 0))
+                            operacion = prog.get("operacion", "").lower()
+                            periodo = int(prog.get("periodo", 1))
+
+                            if variable in ejercicio_mod:
+                                valor_base = ejercicio[variable].strip()
+                                ejercicio_mod[variable] = aplicar_progresion(valor_base, semana, incremento, operacion, periodo)
+
+                    rutina_preview.append([
+                        semana + 1,
+                        fecha_str,
+                        dia_nombre,
+                        ejercicio_mod["Circuito"],
+                        ejercicio_mod["Sección"],
+                        ejercicio_mod["Ejercicio"],
+                        ejercicio_mod["Series"],
+                        ejercicio_mod["Repeticiones"],
+                        ejercicio_mod["Peso"],
+                        ejercicio_mod["Velocidad"],
+                        ejercicio_mod["RIR"],
+                        ejercicio_mod["Tipo"]
+                    ])
+
+        st.subheader("Vista previa de la rutina")
+        st.dataframe(rutina_preview, use_container_width=True)
+
+    st.markdown("---")
+
     if st.button("Generar rutina completa"):
         if not nombre_sel or not correo or not entrenador:
             st.warning("Faltan datos obligatorios: nombre, correo o entrenador.")
@@ -93,6 +159,22 @@ def crear_rutinas():
                     ejercicios = st.session_state.get(dia_key, [])
 
                     for ejercicio in ejercicios:
+                        ejercicio_mod = ejercicio.copy()
+                        nombre_prog = ejercicio["Progresión"].strip()
+
+                        if nombre_prog:
+                            doc_prog = db.collection("progresiones").document(nombre_prog).get()
+                            if doc_prog.exists:
+                                prog = doc_prog.to_dict()
+                                variable = prog.get("variable", "").lower()
+                                incremento = float(prog.get("incremento", 0))
+                                operacion = prog.get("operacion", "").lower()
+                                periodo = int(prog.get("periodo", 1))
+
+                                if variable in ejercicio_mod:
+                                    valor_base = ejercicio[variable].strip()
+                                    ejercicio_mod[variable] = aplicar_progresion(valor_base, semana, incremento, operacion, periodo)
+
                         doc_id = f"{correo_normalizado}_{fecha_normalizada}_{dia_nombre}_{ejercicio['Circuito']}_{ejercicio['Ejercicio']}".lower().replace(" ", "_")
 
                         data = {
@@ -101,16 +183,16 @@ def crear_rutinas():
                             "Semana": str(semana + 1),
                             "Fecha Inicio Semana": fecha_str,
                             "Día": dia_nombre,
-                            "Sección": ejercicio["Sección"],
-                            "Circuito": ejercicio["Circuito"],
-                            "Ejercicio": ejercicio["Ejercicio"],
-                            "Series": ejercicio["Series"],
-                            "Repeticiones": ejercicio["Repeticiones"],
-                            "Peso": ejercicio["Peso"],
-                            "Velocidad": ejercicio["Velocidad"],
-                            "RIR": ejercicio["RIR"],
-                            "Progresión": ejercicio["Progresión"],
-                            "Tipo": ejercicio["Tipo"],
+                            "Sección": ejercicio_mod["Sección"],
+                            "Circuito": ejercicio_mod["Circuito"],
+                            "Ejercicio": ejercicio_mod["Ejercicio"],
+                            "Series": ejercicio_mod["Series"],
+                            "Repeticiones": ejercicio_mod["Repeticiones"],
+                            "Peso": ejercicio_mod["Peso"],
+                            "Velocidad": ejercicio_mod["Velocidad"],
+                            "RIR": ejercicio_mod["RIR"],
+                            "Progresión": ejercicio_mod["Progresión"],
+                            "Tipo": ejercicio_mod["Tipo"],
                             "Entrenador": entrenador
                         }
 
