@@ -40,7 +40,7 @@ def crear_rutinas():
     tabs = st.tabs(dias)
 
     columnas_tabla = [
-        "Circuito", "Nombre Ejercicio", "Series", "Repeticiones", "Peso", "Velocidad", "RIR", "Tipo Ejercicio", "Progresión"
+        "Circuito", "Ejercicio", "Series", "Repeticiones", "Peso", "Velocidad", "RIR", "Tipo Ejercicio", "Progresión"
     ]
 
     for i, tab in enumerate(tabs):
