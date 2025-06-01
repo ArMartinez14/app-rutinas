@@ -40,7 +40,7 @@ def crear_rutinas():
     tabs = st.tabs(dias)
 
     columnas_tabla = [
-        "Circuito", "Sección", "Nombre Ejercicio", "Series", "Repeticiones", "Peso", "Velocidad", "RIR", "Tipo", "Progresión"
+        "Circuito", "Sección", "Nombre Ejercicio", "Series", "Repeticiones", "Peso", "Velocidad", "RIR", "Progresión", "Tipo"
     ]
 
     for i, tab in enumerate(tabs):
@@ -66,8 +66,8 @@ def crear_rutinas():
                 fila["Peso"] = cols[5].text_input("Peso", value=fila["Peso"], key=f"peso_{i}_{idx}")
                 fila["Velocidad"] = cols[6].text_input("Velocidad", value=fila["Velocidad"], key=f"vel_{i}_{idx}")
                 fila["RIR"] = cols[7].text_input("RIR", value=fila["RIR"], key=f"rir_{i}_{idx}")
-                fila["Tipo"] = cols[8].text_input("Tipo", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
-                fila["Progresión"] = cols[9].text_input("Progresión", value=fila["Progresión"], key=f"prog_{i}_{idx}")
+                fila["Progresión"] = cols[8].text_input("Progresión", value=fila["Progresión"], key=f"prog_{i}_{idx}")
+                fila["Tipo"] = cols[9].text_input("Tipo", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
 
     st.markdown("---")
     st.button("🚀 Generar rutina completa")  # Aún no implementado
