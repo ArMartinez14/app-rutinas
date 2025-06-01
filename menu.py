@@ -3,7 +3,6 @@ from ver_rutinas import ver_rutinas
 from crear_rutinas import crear_rutinas
 
 def mostrar_menu():
-    st.set_page_config(page_title="Motion Center", layout="wide")
 
     # Reducir el ancho de la barra lateral
     st.markdown("""
