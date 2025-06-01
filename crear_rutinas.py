@@ -40,7 +40,7 @@ def crear_rutinas():
     tabs = st.tabs(dias)
 
     columnas_tabla = [
-        "Circuito", "Ejercicio", "Series", "Repeticiones", "Peso", "Velocidad", "RIR", "Tipo Ejercicio", "Progresión"
+        "Circuito", "Sección", "Nombre Ejercicio", "Series", "Repeticiones", "Peso", "Velocidad", "RIR", "Tipo", "Progresión"
     ]
 
     for i, tab in enumerate(tabs):
@@ -55,19 +55,19 @@ def crear_rutinas():
             if agregar_fila:
                 st.session_state[dia_key].append({k: "" for k in columnas_tabla})
 
-            # Mostrar como tabla editable
             for idx, fila in enumerate(st.session_state[dia_key]):
                 cols = st.columns(len(columnas_tabla))
                 fila["Circuito"] = cols[0].selectbox("Circuito", ["A", "B", "C", "D", "E", "F", "G"], index=["A", "B", "C", "D", "E", "F", "G"].index(fila["Circuito"]) if fila["Circuito"] else 0, key=f"circ_{i}_{idx}")
-                fila["Ejercicio"] = cols[1].text_input("Ejercicio", value=fila["Ejercicio"], key=f"ej_{i}_{idx}")
-                fila["Series"] = cols[2].number_input("Series", min_value=1, max_value=10, value=int(fila["Series"] or 3), key=f"ser_{i}_{idx}")
-                fila["Repeticiones"] = cols[3].text_input("Reps", value=fila["Repeticiones"], key=f"rep_{i}_{idx}")
-                fila["Peso"] = cols[4].text_input("Peso", value=fila["Peso"], key=f"peso_{i}_{idx}")
-                fila["Velocidad"] = cols[5].text_input("Velocidad", value=fila["Velocidad"], key=f"vel_{i}_{idx}")
-                fila["RIR"] = cols[6].text_input("RIR", value=fila["RIR"], key=f"rir_{i}_{idx}")
-                fila["Tipo Ejercicio"] = "Warm-up" if fila["Circuito"] in ["A", "B", "C"] else "Workout"
-                cols[7].markdown(f"**{fila['Tipo Ejercicio']}**")
-                fila["Progresión"] = cols[8].text_input("Progresión", value=fila["Progresión"], key=f"prog_{i}_{idx}")
+                fila["Sección"] = "Warm-up" if fila["Circuito"] in ["A", "B", "C"] else "Workout"
+                cols[1].markdown(f"**{fila['Sección']}**")
+                fila["Nombre Ejercicio"] = cols[2].text_input("Nombre Ejercicio", value=fila["Nombre Ejercicio"], key=f"ej_{i}_{idx}")
+                fila["Series"] = cols[3].number_input("Series", min_value=1, max_value=10, value=int(fila["Series"] or 3), key=f"ser_{i}_{idx}")
+                fila["Repeticiones"] = cols[4].text_input("Reps", value=fila["Repeticiones"], key=f"rep_{i}_{idx}")
+                fila["Peso"] = cols[5].text_input("Peso", value=fila["Peso"], key=f"peso_{i}_{idx}")
+                fila["Velocidad"] = cols[6].text_input("Velocidad", value=fila["Velocidad"], key=f"vel_{i}_{idx}")
+                fila["RIR"] = cols[7].text_input("RIR", value=fila["RIR"], key=f"rir_{i}_{idx}")
+                fila["Tipo"] = cols[8].text_input("Tipo", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
+                fila["Progresión"] = cols[9].text_input("Progresión", value=fila["Progresión"], key=f"prog_{i}_{idx}")
 
     st.markdown("---")
     st.button("🚀 Generar rutina completa")  # Aún no implementado
