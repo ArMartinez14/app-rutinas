@@ -1,26 +1,37 @@
 import streamlit as st
-from datetime import date
+from firebase_admin import credentials, firestore
+import firebase_admin
+from datetime import datetime
 
+# Inicializar Firebase si no está inicializado
+if not firebase_admin._apps:
+    cred = credentials.Certificate(st.secrets["FIREBASE_CREDENTIALS"])
+    firebase_admin.initialize_app(cred)
+
+db = firestore.client()
 
 def crear_rutinas():
-    st.title("🛠️ Crear nueva rutina")
+    st.title("📅 Crear nueva rutina")
 
-    with st.form("form_rutina"):
-        col1, col2 = st.columns(2)
+    # Obtener lista de usuarios
+    docs = db.collection("usuarios").stream()
+    usuarios = [doc.to_dict() for doc in docs if doc.exists]
 
-        with col1:
-            nombre = st.text_input("👤 Nombre del cliente")
-            correo = st.text_input("📧 Correo electrónico")
-            entrenador = st.text_input("🏋️ Entrenador responsable")
+    nombres = sorted(set(u.get("nombre", "") for u in usuarios))
+    nombre_input = st.text_input("👤 Nombre del cliente:")
+    coincidencias = [n for n in nombres if nombre_input.lower() in n.lower()]
+    nombre_sel = st.selectbox("O selecciona de la lista:", coincidencias if coincidencias else nombres)
 
-        with col2:
-            fecha_inicio = st.date_input("📅 Fecha de inicio", value=date.today())
-            semanas = st.number_input("🔁 Semanas a repetir", min_value=1, max_value=12, value=4, step=1)
+    correo_auto = next((u["correo"] for u in usuarios if u.get("nombre") == nombre_sel), "")
 
-        st.markdown("---")
-        st.info("💡 Próximamente aquí irán los campos para cargar ejercicios por día, con sus progresiones si corresponde.")
+    # Mostrar el correo automáticamente
+    correo = st.text_input("✉️ Correo del cliente:", value=correo_auto)
 
-        submitted = st.form_submit_button("✅ Crear rutina")
+    fecha_inicio = st.date_input("📆 Fecha de inicio de rutina:", value=datetime.today())
+    semanas = st.number_input("🔁 Semanas de duración:", min_value=1, max_value=12, value=4)
+    entrenador = st.text_input("🏋️ Nombre del entrenador responsable:")
 
-        if submitted:
-            st.success("📦 Datos listos para ser procesados (falta implementación del guardado en Firestore o Google Sheets).")
+    st.markdown("---")
+    st.info("🛠️ Aquí irá la lógica para cargar ejercicios por día")
+
+    # Aquí seguiremos agregando más campos y lógica en los siguientes pasos
