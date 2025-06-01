@@ -2,9 +2,10 @@ import streamlit as st
 from ver_rutinas import ver_rutinas
 from crear_rutinas import crear_rutinas
 
-def mostrar_menu():
-    st.set_page_config(page_title="Motion Center", layout="wide")
+# La configuración de página debe ir primero
+st.set_page_config(page_title="Motion Center", layout="wide")
 
+def mostrar_menu():
     # Reducir el ancho de la barra lateral
     st.markdown("""
         <style>
@@ -26,6 +27,10 @@ def mostrar_menu():
     elif crear:
         crear_rutinas()
     else:
-        st.markdown("<br><br><h2 style='text-align:center;'>Bienvenido a Motion Center</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center;'>Selecciona una opción desde el menú lateral para comenzar.</p>", unsafe_allow_html=True)
-        st.image("logo_motion.png", use_column_width="auto")
+        st.markdown("""
+            <div style='text-align: center; margin-top: 3rem;'>
+                <img src="data:image/png;base64,{}" style="max-height:80px;" />
+                <h2 style='color: white;'>Bienvenido a Motion Center</h2>
+                <p style='color: gray;'>Selecciona una opción del menú para comenzar</p>
+            </div>
+        """.format(st.secrets["LOGO_BASE64"].strip()), unsafe_allow_html=True)
