@@ -2,6 +2,7 @@ import streamlit as st
 from firebase_admin import credentials, firestore
 import firebase_admin
 from datetime import datetime, timedelta
+import unicodedata
 
 # === INICIALIZAR FIREBASE ===
 if not firebase_admin._apps:
@@ -27,6 +28,10 @@ def aplicar_progresion(valor_inicial, semana, incremento, operacion, periodo):
             return valor_inicial
     except:
         return valor_inicial
+
+# === FUNCION PARA NORMALIZAR TEXTO ===
+def normalizar_texto(texto):
+    return ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
 
 def crear_rutinas():
     st.title("Crear nueva rutina")
@@ -94,20 +99,20 @@ def crear_rutinas():
     st.markdown("---")
 
     if st.button("Previsualizar rutina"):
-        rutina_preview = []
         for semana in range(int(semanas)):
             fecha_semana = fecha_inicio + timedelta(weeks=semana)
-            fecha_str = fecha_semana.strftime("%d/%m/%Y")
-
+            fecha_str = fecha_semana.strftime("%Y-%m-%d")
+            st.subheader(f"Semana {semana+1} ({fecha_str})")
             for i in range(len(dias)):
                 dia_nombre = dias[i]
                 dia_key = f"rutina_dia_{i+1}"
                 ejercicios = st.session_state.get(dia_key, [])
 
+                st.markdown(f"**{dia_nombre}**")
+                data = []
                 for ejercicio in ejercicios:
                     ejercicio_mod = ejercicio.copy()
                     nombre_prog = ejercicio["Progresión"].strip()
-
                     if nombre_prog:
                         doc_prog = db.collection("progresiones").document(nombre_prog).get()
                         if doc_prog.exists:
@@ -116,88 +121,21 @@ def crear_rutinas():
                             incremento = float(prog.get("incremento", 0))
                             operacion = prog.get("operacion", "").lower()
                             periodo = int(prog.get("periodo", 1))
-
                             if variable in ejercicio_mod:
                                 valor_base = ejercicio[variable].strip()
                                 ejercicio_mod[variable] = aplicar_progresion(valor_base, semana, incremento, operacion, periodo)
 
-                    rutina_preview.append([
-                        semana + 1,
-                        fecha_str,
-                        dia_nombre,
-                        ejercicio_mod["Circuito"],
-                        ejercicio_mod["Sección"],
-                        ejercicio_mod["Ejercicio"],
-                        ejercicio_mod["Series"],
-                        ejercicio_mod["Repeticiones"],
-                        ejercicio_mod["Peso"],
-                        ejercicio_mod["Velocidad"],
-                        ejercicio_mod["RIR"],
-                        ejercicio_mod["Tipo"]
-                    ])
-
-        st.subheader("Vista previa de la rutina")
-        st.dataframe(rutina_preview, use_container_width=True)
+                    data.append({
+                        "Circuito": ejercicio_mod["Circuito"],
+                        "Ejercicio": ejercicio_mod["Ejercicio"],
+                        "Series": ejercicio_mod["Series"],
+                        "Repeticiones": ejercicio_mod["Repeticiones"],
+                        "Peso": ejercicio_mod["Peso"],
+                        "Velocidad": ejercicio_mod["Velocidad"],
+                        "RIR": ejercicio_mod["RIR"],
+                        "Tipo": ejercicio_mod["Tipo"]
+                    })
+                if data:
+                    st.dataframe(data, use_container_width=True)
 
     st.markdown("---")
-
-    if st.button("Generar rutina completa"):
-        if not nombre_sel or not correo or not entrenador:
-            st.warning("Faltan datos obligatorios: nombre, correo o entrenador.")
-            return
-
-        try:
-            for semana in range(int(semanas)):
-                fecha_semana = fecha_inicio + timedelta(weeks=semana)
-                fecha_str = fecha_semana.strftime("%d/%m/%Y")
-                fecha_normalizada = fecha_semana.strftime("%Y_%m_%d")
-                correo_normalizado = correo.replace("@", "_").replace(".", "_")
-
-                for i in range(len(dias)):
-                    dia_nombre = dias[i]
-                    dia_key = f"rutina_dia_{i+1}"
-                    ejercicios = st.session_state.get(dia_key, [])
-
-                    for ejercicio in ejercicios:
-                        ejercicio_mod = ejercicio.copy()
-                        nombre_prog = ejercicio["Progresión"].strip()
-
-                        if nombre_prog:
-                            doc_prog = db.collection("progresiones").document(nombre_prog).get()
-                            if doc_prog.exists:
-                                prog = doc_prog.to_dict()
-                                variable = prog.get("variable", "").lower()
-                                incremento = float(prog.get("incremento", 0))
-                                operacion = prog.get("operacion", "").lower()
-                                periodo = int(prog.get("periodo", 1))
-
-                                if variable in ejercicio_mod:
-                                    valor_base = ejercicio[variable].strip()
-                                    ejercicio_mod[variable] = aplicar_progresion(valor_base, semana, incremento, operacion, periodo)
-
-                        doc_id = f"{correo_normalizado}_{fecha_normalizada}_{dia_nombre}_{ejercicio['Circuito']}_{ejercicio['Ejercicio']}".lower().replace(" ", "_")
-
-                        data = {
-                            "Nombre": nombre_sel,
-                            "Correo": correo,
-                            "Semana": str(semana + 1),
-                            "Fecha Inicio Semana": fecha_str,
-                            "Día": dia_nombre,
-                            "Sección": ejercicio_mod["Sección"],
-                            "Circuito": ejercicio_mod["Circuito"],
-                            "Ejercicio": ejercicio_mod["Ejercicio"],
-                            "Series": ejercicio_mod["Series"],
-                            "Repeticiones": ejercicio_mod["Repeticiones"],
-                            "Peso": ejercicio_mod["Peso"],
-                            "Velocidad": ejercicio_mod["Velocidad"],
-                            "RIR": ejercicio_mod["RIR"],
-                            "Progresión": ejercicio_mod["Progresión"],
-                            "Tipo": ejercicio_mod["Tipo"],
-                            "Entrenador": entrenador
-                        }
-
-                        db.collection("rutinas").document(doc_id).set(data)
-
-            st.success(f"\u2705 Rutina generada correctamente para {semanas} semanas.")
-        except Exception as e:
-            st.error(f"\u274C Error al guardar la rutina: {e}")

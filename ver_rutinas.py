@@ -1,141 +1,191 @@
-import streamlit as st
-from firebase_admin import credentials, firestore
-import firebase_admin
-from datetime import datetime, timedelta
-import unicodedata
+def ver_rutinas():
+    import streamlit as st
+    import firebase_admin
+    from firebase_admin import credentials, firestore
+    from datetime import datetime, timedelta
+    from collections import defaultdict
+    import json
 
-# === INICIALIZAR FIREBASE ===
-if not firebase_admin._apps:
-    cred = credentials.Certificate(st.secrets["FIREBASE_CREDENTIALS"])
-    firebase_admin.initialize_app(cred)
+    # === INICIALIZAR FIREBASE ===
+    if not firebase_admin._apps:
+        cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
+        cred = credentials.Certificate(cred_dict)
+        firebase_admin.initialize_app(cred)
 
-db = firestore.client()
+    db = firestore.client()
 
-# === FUNCION DE PROGRESIÓN ===
-def aplicar_progresion(valor_inicial, semana, incremento, operacion, periodo):
-    try:
-        if semana == 0:
-            return valor_inicial  # semana base
+    # === FUNCIONES AUXILIARES ===
+    def obtener_fecha_lunes():
+        hoy = datetime.now()
+        lunes = hoy - timedelta(days=hoy.weekday())
+        return lunes.strftime("%Y-%m-%d")
 
-        if semana % periodo != 0:
-            return valor_inicial
+    def es_entrenador(rol):
+        return rol.lower() in ["entrenador", "admin", "administrador"]
 
-        if operacion == "suma":
-            return str(float(valor_inicial) + incremento)
-        elif operacion == "multiplicacion":
-            return str(float(valor_inicial) * incremento)
+    def ordenar_circuito(ejercicio):
+        orden = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 6, "G": 7}
+        return orden.get(ejercicio.get("circuito", ""), 99)
+
+    # === ESTILOS PERSONALIZADOS ===
+    st.markdown("""
+        <style>
+        body, .stApp {
+            background-color: #000000;
+            color: white;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: white;
+        }
+        .block-container {
+            padding: 1rem;
+        }
+        .titulo-bloque {
+            background-color: #8B0000;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 1.3rem;
+            margin-top: 1rem;
+        }
+        .circuito {
+            color: #ff4d4d;
+            font-weight: bold;
+            margin-top: 0.5rem;
+        }
+        .compact-input input {
+            height: 22px !important;
+            font-size: 11px !important;
+            padding: 2px 4px !important;
+            width: 42px !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    logo_base64 = st.secrets["LOGO_BASE64"]
+    st.markdown(
+        f"""
+        <div style='text-align: center; margin-bottom: 1rem;'>
+            <img src="data:image/png;base64,{logo_base64.strip()}" style="max-height:45px;" />
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    correo = st.text_input("🔑 Ingresa tu correo:")
+
+    if correo:
+        correo = correo.strip().lower()
+        doc_user = db.collection("usuarios").document(correo).get()
+        if not doc_user.exists:
+            st.error("❌ Este correo no está registrado.")
+            st.stop()
+
+        datos_usuario = doc_user.to_dict()
+        nombre = datos_usuario.get("nombre", "Usuario")
+        rol = datos_usuario.get("rol", "desconocido")
+
+        st.success(f"Bienvenido {nombre} ({rol})")
+
+        if es_entrenador(rol):
+            todas_rutinas = db.collection("rutinas").stream()
         else:
-            return valor_inicial
-    except:
-        return valor_inicial
+            todas_rutinas = db.collection("rutinas").where("correo", "==", correo).stream()
 
-# === FUNCION PARA NORMALIZAR TEXTO ===
-def normalizar_texto(texto):
-    return ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
+        rutinas_list = [r.to_dict() for r in todas_rutinas]
 
-def crear_rutinas():
-    st.title("Crear nueva rutina")
+        if not rutinas_list:
+            st.warning("⚠️ No se encontraron rutinas registradas.")
+            st.stop()
 
-    # === OBTENER USUARIOS DESDE FIRESTORE ===
-    docs = db.collection("usuarios").stream()
-    usuarios = [doc.to_dict() for doc in docs if doc.exists]
-    nombres = sorted(set(u.get("nombre", "") for u in usuarios))
+        clientes = sorted(set(r["cliente"] for r in rutinas_list if "cliente" in r))
+        cliente_input = st.text_input("👤 Escribe el nombre del cliente:", key="cliente")
+        cliente_opciones = [c for c in clientes if cliente_input.lower() in c.lower()]
+        cliente_sel = st.selectbox("O selecciona de la lista:", cliente_opciones if cliente_opciones else clientes)
 
-    # === INPUT DE NOMBRE CON SUGERENCIAS ===
-    nombre_input = st.text_input("Escribe el nombre del cliente:")
-    coincidencias = [n for n in nombres if nombre_input.lower() in n.lower()]
-    nombre_sel = st.selectbox("Selecciona de la lista:", coincidencias) if coincidencias else ""
+        rutinas_cliente = [r for r in rutinas_list if r.get("cliente") == cliente_sel]
+        semanas = sorted({r["fecha_lunes"] for r in rutinas_cliente}, reverse=True)
 
-    # === AUTOCOMPLETAR CORREO ===
-    correo_auto = next((u.get("correo", "") for u in usuarios if u.get("nombre") == nombre_sel), "")
-    correo = st.text_input("Correo del cliente:", value=correo_auto)
+        semana_actual = obtener_fecha_lunes()
+        semana_sel = st.selectbox("📆 Selecciona la semana", semanas, index=semanas.index(semana_actual) if semana_actual in semanas else 0, key="semana")
 
-    # === OTROS CAMPOS ===
-    fecha_inicio = st.date_input("Fecha de inicio de rutina:", value=datetime.today())
-    semanas = st.number_input("Semanas de duración:", min_value=1, max_value=12, value=4)
-    entrenador = st.text_input("Nombre del entrenador responsable:")
+        rutinas = [r for r in rutinas_cliente if r["fecha_lunes"] == semana_sel]
 
-    st.markdown("---")
-    st.subheader("Días de entrenamiento")
+        if not rutinas:
+            st.warning("⚠️ No hay rutinas registradas para esta semana.")
+            st.stop()
 
-    dias = ["Día 1", "Día 2", "Día 3", "Día 4", "Día 5"]
-    tabs = st.tabs(dias)
+        dias = sorted(set(r["dia"] for r in rutinas), key=lambda x: int(x))
+        dia_sel = st.selectbox("📅 Selecciona el día", dias, key="dia")
 
-    columnas_tabla = [
-        "Circuito", "Sección", "Ejercicio", "Series", "Repeticiones",
-        "Peso", "Velocidad", "RIR", "Progresión", "Tipo"
-    ]
+        if st.button("👀 Ver rutina"):
+            st.session_state.mostrar_rutina = True
 
-    for i, tab in enumerate(tabs):
-        with tab:
-            dia_key = f"rutina_dia_{i+1}"
-            if dia_key not in st.session_state:
-                st.session_state[dia_key] = []
+        if st.session_state.get("mostrar_rutina"):
+            ejercicios = [r for r in rutinas if r["dia"] == dia_sel]
 
-            st.write(f"Ejercicios para {dias[i]}")
+            if ejercicios:
+                semana_ciclo = ejercicios[0].get("semana_ciclo", "")
+                if semana_ciclo:
+                    st.markdown(f"### {semana_ciclo}")
 
-            agregar_fila = st.button(f"Agregar fila en {dias[i]}", key=f"add_row_{i}")
-            if agregar_fila:
-                st.session_state[dia_key].append({k: "" for k in columnas_tabla})
+            ejercicios.sort(key=ordenar_circuito)
+            bloques = defaultdict(list)
+            for e in ejercicios:
+                bloques[e["bloque"]].append(e)
 
-            for idx, fila in enumerate(st.session_state[dia_key]):
-                cols = st.columns(len(columnas_tabla))
+            for bloque in ["Warm-up", "Workout"]:
+                if bloque in bloques:
+                    st.markdown(f"<div class='titulo-bloque'>{bloque}</div>", unsafe_allow_html=True)
+                    circuitos = defaultdict(list)
+                    for e in bloques[bloque]:
+                        circuito = e.get("circuito", "Z")
+                        circuitos[circuito].append(e)
 
-                fila["Circuito"] = cols[0].selectbox("Circuito", ["A", "B", "C", "D", "E", "F", "G"],
-                                                    index=["A", "B", "C", "D", "E", "F", "G"].index(fila["Circuito"]) if fila["Circuito"] else 0,
-                                                    key=f"circ_{i}_{idx}")
-                fila["Sección"] = "Warm Up" if fila["Circuito"] in ["A", "B", "C"] else "Work Out"
-                cols[1].markdown(f"**{fila['Sección']}**")
+                    for circuito in sorted(circuitos.keys()):
+                        st.markdown(f"<div class='circuito'>Circuito {circuito}</div>", unsafe_allow_html=True)
+                        for e in circuitos[circuito]:
+                            with st.expander(f"{e['ejercicio']}"):
+                                st.markdown(f"**🎯 Objetivo:** {e.get('series', 0)} × {e.get('repeticiones', 0)} reps @ {e.get('peso', 0)} kg")
+                                num_series = e.get("series") or 0
+                                registro_series = e.get("registro_series", [{}]*num_series)
 
-                fila["Ejercicio"] = cols[2].text_input("Ejercicio", value=fila["Ejercicio"], key=f"ej_{i}_{idx}")
-                fila["Series"] = cols[3].number_input("Series", min_value=1, max_value=10, value=int(fila["Series"] or 3), key=f"ser_{i}_{idx}")
-                fila["Repeticiones"] = cols[4].text_input("Reps", value=fila["Repeticiones"], key=f"rep_{i}_{idx}")
-                fila["Peso"] = cols[5].text_input("Peso", value=fila["Peso"], key=f"peso_{i}_{idx}")
-                fila["Velocidad"] = cols[6].text_input("Velocidad", value=fila["Velocidad"], key=f"vel_{i}_{idx}")
-                fila["RIR"] = cols[7].text_input("RIR", value=fila["RIR"], key=f"rir_{i}_{idx}")
-                fila["Progresión"] = cols[8].text_input("Progresión", value=fila["Progresión"], key=f"prog_{i}_{idx}")
-                fila["Tipo"] = cols[9].text_input("Tipo", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
+                                header_cols = st.columns([1, 1, 1])
+                                header_cols[0].markdown("**Serie**")
+                                header_cols[1].markdown("**Reps**")
+                                header_cols[2].markdown("**Peso (kg)**")
 
-    st.markdown("---")
+                                nuevas_series = []
+                                for i in range(num_series):
+                                    col1, col2, col3 = st.columns([1, 1, 1])
+                                    col1.markdown(f"{i + 1}")
+                                    with col2:
+                                        st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
+                                        reps_input = st.text_input("Reps", value=registro_series[i].get("reps", ""), key=f"reps_{e['ejercicio']}_{i}", label_visibility="collapsed")
+                                        st.markdown("</div>", unsafe_allow_html=True)
+                                    with col3:
+                                        st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
+                                        peso_input = st.text_input("Peso", value=registro_series[i].get("peso", ""), key=f"peso_{e['ejercicio']}_{i}", label_visibility="collapsed")
+                                        st.markdown("</div>", unsafe_allow_html=True)
+                                    nuevas_series.append({"reps": reps_input, "peso": peso_input})
 
-    if st.button("Previsualizar rutina"):
-        for semana in range(int(semanas)):
-            fecha_semana = fecha_inicio + timedelta(weeks=semana)
-            fecha_str = fecha_semana.strftime("%Y-%m-%d")
-            st.subheader(f"Semana {semana+1} ({fecha_str})")
-            for i in range(len(dias)):
-                dia_nombre = dias[i]
-                dia_key = f"rutina_dia_{i+1}"
-                ejercicios = st.session_state.get(dia_key, [])
+                                comentario_input = st.text_input("📝 Comentario", value=e.get("comentario", ""), key=f"coment_{e['ejercicio']}")
 
-                st.markdown(f"**{dia_nombre}**")
-                data = []
-                for ejercicio in ejercicios:
-                    ejercicio_mod = ejercicio.copy()
-                    nombre_prog = ejercicio["Progresión"].strip()
-                    if nombre_prog:
-                        doc_prog = db.collection("progresiones").document(nombre_prog).get()
-                        if doc_prog.exists:
-                            prog = doc_prog.to_dict()
-                            variable = prog.get("variable", "").lower()
-                            incremento = float(prog.get("incremento", 0))
-                            operacion = prog.get("operacion", "").lower()
-                            periodo = int(prog.get("periodo", 1))
-                            if variable in ejercicio_mod:
-                                valor_base = ejercicio[variable].strip()
-                                ejercicio_mod[variable] = aplicar_progresion(valor_base, semana, incremento, operacion, periodo)
+                                if e.get("video"):
+                                    st.video(e["video"])
 
-                    data.append({
-                        "Circuito": ejercicio_mod["Circuito"],
-                        "Ejercicio": ejercicio_mod["Ejercicio"],
-                        "Series": ejercicio_mod["Series"],
-                        "Repeticiones": ejercicio_mod["Repeticiones"],
-                        "Peso": ejercicio_mod["Peso"],
-                        "Velocidad": ejercicio_mod["Velocidad"],
-                        "RIR": ejercicio_mod["RIR"],
-                        "Tipo": ejercicio_mod["Tipo"]
-                    })
-                if data:
-                    st.dataframe(data, use_container_width=True)
+                                correo_normalizado = e["correo"].replace("@", "_").replace(".", "_")
+                                fecha_normalizada = e["fecha_lunes"].replace("-", "_")
+                                doc_id = f"{correo_normalizado}_{fecha_normalizada}_{e['dia']}_{e['circuito']}_{e['ejercicio']}".lower().replace(" ", "_")
+                                doc_ref = db.collection("rutinas").document(doc_id)
 
-    st.markdown("---")
+                                if st.button(f"💾 Guardar cambios - {e['ejercicio']}", key=f"guardar_{e['ejercicio']}"):
+                                    try:
+                                        doc_ref.update({
+                                            "registro_series": nuevas_series,
+                                            "comentario": comentario_input
+                                        })
+                                        st.success("✅ Registro actualizado exitosamente.")
+                                    except Exception as error:
+                                        st.error("❌ No se pudo guardar. Es posible que el documento no exista con ese ID.")
+                                        st.exception(error)
