@@ -26,6 +26,23 @@ def ver_rutinas():
 
     st.markdown("""
         <style>
+        @media screen and (max-width: 768px) {
+            .stButton>button {
+                padding: 0.25rem 0.75rem !important;
+                font-size: 12px !important;
+            }
+            .stMarkdown, .stTextInput, .stSelectbox, .stTextArea {
+                font-size: 13px !important;
+            }
+            .block-container {
+                padding: 0.5rem !important;
+            }
+            .compact-input input {
+                width: 38px !important;
+                font-size: 11px !important;
+                padding: 2px !important;
+            }
+        }
         .tabla-rutina td, .tabla-rutina th {
             padding: 4px 8px;
             border: 1px solid #444;
