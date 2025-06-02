@@ -46,7 +46,7 @@ def ver_rutinas():
                 padding: 0.5rem !important;
             }
             .compact-input input {
-                width: 30px !important;
+                width: 38px !important;
                 font-size: 11px !important;
                 padding: 2px !important;
             }
@@ -69,9 +69,48 @@ def ver_rutinas():
             color: white !important;
         }
         </style>
+        @media screen and (max-width: 768px) {
+            .desktop-view { display: none !important; }
+            .mobile-view { display: block !important; }
+        }
+        @media screen and (min-width: 769px) {
+            .desktop-view { display: block !important; }
+            .mobile-view { display: none !important; }
+        }
+        @media screen and (max-width: 768px) {
+            .stButton>button {
+                padding: 0.25rem 0.75rem !important;
+                font-size: 12px !important;
+            }
+            .stMarkdown, .stTextInput, .stSelectbox, .stTextArea {
+                font-size: 13px !important;
+            }
+            .block-container {
+                padding: 0.5rem !important;
+            }
+            .compact-input input {
+                width: 38px !important;
+                font-size: 11px !important;
+                padding: 2px !important;
+            }
+        }
+        .tabla-rutina td, .tabla-rutina th {
+            padding: 4px 8px;
+            border: 1px solid #444;
+        }
+        .tabla-rutina tr:nth-child(even) {
+            background-color: #1a1a1a;
+        }
+        .tabla-sep {
+            height: 8px;
+        }
+        </style>
     """, unsafe_allow_html=True)
 
-        correo = st.text_input("🔑 Ingresa tu correo:")
+    logo_base64 = st.secrets["LOGO_BASE64"]
+    st.markdown(f"<div style='text-align: center; margin-bottom: 1rem;'><img src='data:image/png;base64,{logo_base64.strip()}' style='max-height:45px;' /></div>", unsafe_allow_html=True)
+
+    correo = st.text_input("\U0001F511 Ingresa tu correo:")
 
     if correo:
         correo = correo.strip().lower()
@@ -98,7 +137,7 @@ def ver_rutinas():
             st.stop()
 
         clientes = sorted(set(r["cliente"] for r in rutinas_list if "cliente" in r))
-        cliente_input = st.text_input("👤 Escribe el nombre del cliente:", key="cliente")
+        cliente_input = st.text_input("\U0001F464 Escribe el nombre del cliente:", key="cliente")
         cliente_opciones = [c for c in clientes if cliente_input.lower() in c.lower()]
         cliente_sel = st.selectbox("O selecciona de la lista:", cliente_opciones if cliente_opciones else clientes)
 
@@ -106,7 +145,7 @@ def ver_rutinas():
         semanas = sorted({r["fecha_lunes"] for r in rutinas_cliente}, reverse=True)
 
         semana_actual = obtener_fecha_lunes()
-        semana_sel = st.selectbox("📆 Selecciona la semana", semanas, index=semanas.index(semana_actual) if semana_actual in semanas else 0, key="semana")
+        semana_sel = st.selectbox("\U0001F4C6 Selecciona la semana", semanas, index=semanas.index(semana_actual) if semana_actual in semanas else 0, key="semana")
 
         rutinas = [r for r in rutinas_cliente if r["fecha_lunes"] == semana_sel]
 
@@ -115,7 +154,7 @@ def ver_rutinas():
             st.stop()
 
         dias = sorted(set(r["dia"] for r in rutinas), key=lambda x: int(x))
-        dia_sel = st.selectbox("📅 Selecciona el día", dias, key="dia")
+        dia_sel = st.selectbox("\U0001F4C5 Selecciona el día", dias, key="dia")
 
         ejercicios = [r for r in rutinas if r["dia"] == dia_sel]
 
@@ -130,8 +169,8 @@ def ver_rutinas():
         peso_presente = any(e.get("peso") for e in ejercicios)
 
         secciones_vistas = set()
-        prev_circuito = None
 
+        prev_circuito = None
         for idx, e in enumerate(ejercicios):
             circuito = e.get("circuito", "Z").upper()
             seccion = "Warm-up" if circuito in ["A", "B", "C"] else "Workout"
@@ -141,21 +180,25 @@ def ver_rutinas():
                 secciones_vistas.add(seccion)
 
             if prev_circuito and prev_circuito != circuito:
-                st.markdown("<hr style='border: 0; height: 4px; background: #666; margin: 1.2rem 0;'>", unsafe_allow_html=True)
+                st.markdown("<hr style='border: 0; height: 4px; background: #666; margin: 1.2rem 0 1.2rem 0;'>", unsafe_allow_html=True)
             prev_circuito = circuito
 
             col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 3, 1, 1, 1, 1], gap="small")
             col1.write("")
             col2.markdown(f"<div style='text-align:center'>{circuito}</div>", unsafe_allow_html=True)
             col3.markdown(f"<div style='text-align:center'>{e['ejercicio']}</div>", unsafe_allow_html=True)
-            col4.markdown(f"<p style='font-size:16px; color:white; text-align:center'><b>{e.get('series', '')}</b></p>", unsafe_allow_html=True)
-            col5.markdown(f"<p style='font-size:16px; color:white; text-align:center'><b>{e.get('repeticiones', '')}</b></p>", unsafe_allow_html=True)
-            col6.markdown(f"<p style='font-size:16px; color:white; text-align:center'><b>{e.get('peso') if e.get('peso') else ''}</b></p>", unsafe_allow_html=True)
+            col4.markdown(f"<p style='font-size:16px; color:white;'><b>{e.get('series', '')}</b></p>", unsafe_allow_html=True)
+            col5.markdown(f"<p style='font-size:16px; color:white;'><b>{e.get('repeticiones', '')}</b></p>", unsafe_allow_html=True)
+            if peso_presente:
+                col6.markdown(f"<p style='font-size:16px; color:white;'><b>{e.get('peso') if e.get('peso') else ''}</b></p>", unsafe_allow_html=True)
+            else:
+                col6.empty()
 
             if col7.button(f"Editar", key=f"editar_{idx}"):
                 st.session_state.ejercicio_idx = idx
 
             if "ejercicio_idx" in st.session_state and st.session_state.ejercicio_idx == idx:
+
                 num_series = e.get("series") or 0
                 registro_series = e.get("registro_series", [{}]*num_series)
 
@@ -166,7 +209,7 @@ def ver_rutinas():
 
                 nuevas_series = []
                 for i in range(num_series):
-                    col1, col2, col3 = st.columns([0.4, 0.4, 0.4])
+                    col1, col2, col3 = st.columns([0.6, 0.6, 0.6])
                     col1.markdown(f"<div style='text-align:center; vertical-align:middle'>{i + 1}</div>", unsafe_allow_html=True)
                     with col2:
                         st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
