@@ -182,10 +182,10 @@ def ver_rutinas():
             col1.write("")
             col2.write(circuito)
             col3.write(e['ejercicio'])
-            col4.markdown(f"<span class='dato'>{e.get('series', '')}</span>", unsafe_allow_html=True)
-            col5.markdown(f"<span class='dato'>{e.get('repeticiones', '')}</span>", unsafe_allow_html=True)
+            col4.markdown(f"<p style='font-size:16px; color:white;'><b>{e.get('series', '')}</b></p>", unsafe_allow_html=True)
+            col5.markdown(f"<p style='font-size:16px; color:white;'><b>{e.get('repeticiones', '')}</b></p>", unsafe_allow_html=True)
             if peso_presente:
-                col6.markdown(f"<span class='dato'>{e.get('peso') if e.get('peso') else ''}</span>", unsafe_allow_html=True)
+                col6.markdown(f"<p style='font-size:16px; color:white;'><b>{e.get('peso') if e.get('peso') else ''}</b></p>", unsafe_allow_html=True)
             else:
                 col6.empty()
 
