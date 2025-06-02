@@ -198,7 +198,7 @@ def ver_rutinas():
                 st.session_state.ejercicio_idx = idx
 
             if "ejercicio_idx" in st.session_state and st.session_state.ejercicio_idx == idx:
-                } × {e.get('repeticiones', 0)} reps" + (f" @ {e.get('peso')} kg" if e.get('peso') else ""))
+
                 num_series = e.get("series") or 0
                 registro_series = e.get("registro_series", [{}]*num_series)
 
