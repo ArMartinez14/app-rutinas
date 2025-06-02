@@ -180,7 +180,7 @@ def ver_rutinas():
                 secciones_vistas.add(seccion)
 
             if prev_circuito and prev_circuito != circuito:
-                st.markdown("<hr style='border: 0; height: 3px; background: #444; margin: 0.8rem 0;'>", unsafe_allow_html=True)
+                st.markdown("<hr style='border: 0; height: 4px; background: #666; margin: 1.2rem 0 1.2rem 0;'>", unsafe_allow_html=True)
             prev_circuito = circuito
 
             col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 3, 1, 1, 1, 1], gap="small")
