@@ -198,19 +198,19 @@ def ver_rutinas():
                 st.session_state.ejercicio_idx = idx
 
             if "ejercicio_idx" in st.session_state and st.session_state.ejercicio_idx == idx:
-                st.markdown(f"**🎯 Objetivo:** {e.get('series', 0)} × {e.get('repeticiones', 0)} reps" + (f" @ {e.get('peso')} kg" if e.get('peso') else ""))
+                } × {e.get('repeticiones', 0)} reps" + (f" @ {e.get('peso')} kg" if e.get('peso') else ""))
                 num_series = e.get("series") or 0
                 registro_series = e.get("registro_series", [{}]*num_series)
 
-                header_cols = st.columns([1, 1, 1])
+                header_cols = st.columns([0.6, 0.6, 0.6])
                 header_cols[0].markdown("**Serie**")
                 header_cols[1].markdown("**Reps**")
                 header_cols[2].markdown("**Peso (kg)**")
 
                 nuevas_series = []
                 for i in range(num_series):
-                    col1, col2, col3 = st.columns([1, 1, 1])
-                    col1.markdown(f"{i + 1}")
+                    col1, col2, col3 = st.columns([0.6, 0.6, 0.6])
+                    col1.markdown(f"<div style='text-align:center; vertical-align:middle'>{i + 1}</div>", unsafe_allow_html=True)
                     with col2:
                         st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
                         reps_input = st.text_input("Reps", value=registro_series[i].get("reps", ""), key=f"reps_{e['ejercicio']}_{i}", label_visibility="collapsed")
