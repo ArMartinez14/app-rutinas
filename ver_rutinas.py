@@ -3,7 +3,6 @@ def ver_rutinas():
     import firebase_admin
     from firebase_admin import credentials, firestore
     from datetime import datetime, timedelta
-    from collections import defaultdict
     import json
 
     if not firebase_admin._apps:
@@ -99,81 +98,72 @@ def ver_rutinas():
         ejercicios.sort(key=ordenar_circuito)
 
         st.markdown("### Tabla de ejercicios")
-        html_table = """
-        <table class='tabla-rutina'>
-        <tr><th>Sección</th><th>Circuito</th><th>Ejercicio</th><th>Serie</th><th>Repeticiones</th>{peso_header}</tr>
-        """
         peso_presente = any(e.get("peso") for e in ejercicios)
-        peso_header = "<th>Peso</th>" if peso_presente else ""
-        html_table = html_table.replace("{peso_header}", peso_header)
 
-        circuito_actual = None
-        for e in ejercicios:
-            circuito = e.get("circuito", "Z").upper()
-            seccion = "Warm-up" if circuito in ["A", "B", "C"] else "Workout"
-            if circuito_actual and circuito != circuito_actual:
-                html_table += "<tr class='tabla-sep'></tr>"
-            circuito_actual = circuito
-
-            peso_col = f"<td>{e.get('peso','')}</td>" if peso_presente else ""
-            html_table += f"<tr><td>{seccion}</td><td>{circuito}</td><td>{e['ejercicio']}</td><td>{e.get('series','')}</td><td>{e.get('repeticiones','')}</td>{peso_col}</tr>"
-        html_table += "</table>"
-        st.markdown(html_table, unsafe_allow_html=True)
-
-        opciones_ejercicios = []
-        for e in ejercicios:
+        for idx, e in enumerate(ejercicios):
             circuito = e.get("circuito", "Z").upper()
             seccion = "Warm-up" if circuito in ["A", "B", "C"] else "Workout"
             objetivo = f"{e.get('series', 0)}x{e.get('repeticiones', 0)}"
             if e.get("peso"): objetivo += f" @ {e['peso']}kg"
-            opciones_ejercicios.append(f"{seccion} | {circuito} | {e['ejercicio']} ({objetivo})")
 
-        ejercicio_sel = st.radio("\u2705 Selecciona un ejercicio para editar:", opciones_ejercicios, key="ej_sel")
+            col1, col2, col3, col4, col5, col6 = st.columns([1.5, 1, 3, 1, 1, 1])
+            col1.write(seccion)
+            col2.write(circuito)
+            col3.write(e['ejercicio'])
+            col4.write(e.get("series", ""))
+            col5.write(e.get("repeticiones", ""))
+            if peso_presente:
+                col6.write(e.get("peso", ""))
+            else:
+                col6.empty()
 
-        ejercicio_idx = opciones_ejercicios.index(ejercicio_sel)
-        e = ejercicios[ejercicio_idx]
+            if st.button(f"✏️ Editar - {e['ejercicio']}", key=f"editar_{idx}"):
+                st.session_state.ejercicio_idx = idx
 
-        st.markdown(f"**🎯 Objetivo:** {e.get('series', 0)} × {e.get('repeticiones', 0)} reps" + (f" @ {e.get('peso')} kg" if e.get('peso') else ""))
+        if "ejercicio_idx" in st.session_state:
+            e = ejercicios[st.session_state.ejercicio_idx]
 
-        num_series = e.get("series") or 0
-        registro_series = e.get("registro_series", [{}]*num_series)
+            st.markdown(f"**🎯 Objetivo:** {e.get('series', 0)} × {e.get('repeticiones', 0)} reps" + (f" @ {e.get('peso')} kg" if e.get('peso') else ""))
 
-        header_cols = st.columns([1, 1, 1])
-        header_cols[0].markdown("**Serie**")
-        header_cols[1].markdown("**Reps**")
-        header_cols[2].markdown("**Peso (kg)**")
+            num_series = e.get("series") or 0
+            registro_series = e.get("registro_series", [{}]*num_series)
 
-        nuevas_series = []
-        for i in range(num_series):
-            col1, col2, col3 = st.columns([1, 1, 1])
-            col1.markdown(f"{i + 1}")
-            with col2:
-                st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
-                reps_input = st.text_input("Reps", value=registro_series[i].get("reps", ""), key=f"reps_{e['ejercicio']}_{i}", label_visibility="collapsed")
-                st.markdown("</div>", unsafe_allow_html=True)
-            with col3:
-                st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
-                peso_input = st.text_input("Peso", value=registro_series[i].get("peso", ""), key=f"peso_{e['ejercicio']}_{i}", label_visibility="collapsed")
-                st.markdown("</div>", unsafe_allow_html=True)
-            nuevas_series.append({"reps": reps_input, "peso": peso_input})
+            header_cols = st.columns([1, 1, 1])
+            header_cols[0].markdown("**Serie**")
+            header_cols[1].markdown("**Reps**")
+            header_cols[2].markdown("**Peso (kg)**")
 
-        comentario_input = st.text_input("📝 Comentario", value=e.get("comentario", ""), key=f"coment_{e['ejercicio']}")
+            nuevas_series = []
+            for i in range(num_series):
+                col1, col2, col3 = st.columns([1, 1, 1])
+                col1.markdown(f"{i + 1}")
+                with col2:
+                    st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
+                    reps_input = st.text_input("Reps", value=registro_series[i].get("reps", ""), key=f"reps_{e['ejercicio']}_{i}", label_visibility="collapsed")
+                    st.markdown("</div>", unsafe_allow_html=True)
+                with col3:
+                    st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
+                    peso_input = st.text_input("Peso", value=registro_series[i].get("peso", ""), key=f"peso_{e['ejercicio']}_{i}", label_visibility="collapsed")
+                    st.markdown("</div>", unsafe_allow_html=True)
+                nuevas_series.append({"reps": reps_input, "peso": peso_input})
 
-        if e.get("video"):
-            st.video(e["video"])
+            comentario_input = st.text_input("📝 Comentario", value=e.get("comentario", ""), key=f"coment_{e['ejercicio']}")
 
-        correo_normalizado = e["correo"].replace("@", "_").replace(".", "_")
-        fecha_normalizada = e["fecha_lunes"].replace("-", "_")
-        doc_id = f"{correo_normalizado}_{fecha_normalizada}_{e['dia']}_{e['circuito']}_{e['ejercicio']}".lower().replace(" ", "_")
-        doc_ref = db.collection("rutinas").document(doc_id)
+            if e.get("video"):
+                st.video(e["video"])
 
-        if st.button(f"💾 Guardar cambios - {e['ejercicio']}", key=f"guardar_{e['ejercicio']}"):
-            try:
-                doc_ref.update({
-                    "registro_series": nuevas_series,
-                    "comentario": comentario_input
-                })
-                st.success("✅ Registro actualizado exitosamente.")
-            except Exception as error:
-                st.error("❌ No se pudo guardar. Es posible que el documento no exista con ese ID.")
-                st.exception(error)
+            correo_normalizado = e["correo"].replace("@", "_").replace(".", "_")
+            fecha_normalizada = e["fecha_lunes"].replace("-", "_")
+            doc_id = f"{correo_normalizado}_{fecha_normalizada}_{e['dia']}_{e['circuito']}_{e['ejercicio']}".lower().replace(" ", "_")
+            doc_ref = db.collection("rutinas").document(doc_id)
+
+            if st.button(f"💾 Guardar cambios - {e['ejercicio']}", key=f"guardar_{e['ejercicio']}"):
+                try:
+                    doc_ref.update({
+                        "registro_series": nuevas_series,
+                        "comentario": comentario_input
+                    })
+                    st.success("✅ Registro actualizado exitosamente.")
+                except Exception as error:
+                    st.error("❌ No se pudo guardar. Es posible que el documento no exista con ese ID.")
+                    st.exception(error)
