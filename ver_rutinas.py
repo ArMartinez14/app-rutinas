@@ -170,6 +170,7 @@ def ver_rutinas():
 
         secciones_vistas = set()
 
+        prev_circuito = None
         for idx, e in enumerate(ejercicios):
             circuito = e.get("circuito", "Z").upper()
             seccion = "Warm-up" if circuito in ["A", "B", "C"] else "Workout"
@@ -177,6 +178,10 @@ def ver_rutinas():
             if seccion not in secciones_vistas:
                 st.markdown(f"#### {seccion}")
                 secciones_vistas.add(seccion)
+
+            if prev_circuito and prev_circuito != circuito:
+                st.markdown("<hr style='border: 0; height: 1px; background: #666; margin: 0.5rem 0;'>", unsafe_allow_html=True)
+            prev_circuito = circuito
 
             col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 3, 1, 1, 1, 1])
             col1.write("")
