@@ -202,10 +202,10 @@ def ver_rutinas():
                 num_series = e.get("series") or 0
                 registro_series = e.get("registro_series", [{}]*num_series)
 
-                header_cols = st.columns([0.6, 0.6, 0.6])
-                header_cols[0].markdown("**Serie**")
-                header_cols[1].markdown("**Reps**")
-                header_cols[2].markdown("**Peso (kg)**")
+                header_cols = st.columns([0.5, 0.5, 0.5])
+                header_cols[0].markdown("<div style='text-align:center; font-weight:bold;'>Serie</div>", unsafe_allow_html=True)
+                header_cols[1].markdown("<div style='text-align:center; font-weight:bold;'>Reps</div>", unsafe_allow_html=True)
+                header_cols[2].markdown("<div style='text-align:center; font-weight:bold;'>Peso (kg)</div>", unsafe_allow_html=True)
 
                 nuevas_series = []
                 for i in range(num_series):
