@@ -6,7 +6,6 @@ def ver_rutinas():
     from collections import defaultdict
     import json
 
-    # === INICIALIZAR FIREBASE ===
     if not firebase_admin._apps:
         cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
         cred = credentials.Certificate(cred_dict)
@@ -14,7 +13,6 @@ def ver_rutinas():
 
     db = firestore.client()
 
-    # === FUNCIONES AUXILIARES ===
     def obtener_fecha_lunes():
         hoy = datetime.now()
         lunes = hoy - timedelta(days=hoy.weekday())
@@ -27,25 +25,8 @@ def ver_rutinas():
         orden = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 6, "G": 7}
         return orden.get(ejercicio.get("circuito", ""), 99)
 
-    # === ESTILOS PERSONALIZADOS ===
     st.markdown("""
         <style>
-        body, .stApp {
-            background-color: #000000;
-            color: white;
-        }
-        h1, h2, h3, h4, h5, h6 {
-            color: white;
-        }
-        .block-container {
-            padding: 1rem;
-        }
-        .compact-input input {
-            height: 22px !important;
-            font-size: 11px !important;
-            padding: 2px 4px !important;
-            width: 42px !important;
-        }
         .tabla-rutina td, .tabla-rutina th {
             padding: 4px 8px;
             border: 1px solid #444;
@@ -53,18 +34,14 @@ def ver_rutinas():
         .tabla-rutina tr:nth-child(even) {
             background-color: #1a1a1a;
         }
+        .tabla-sep {
+            height: 8px;
+        }
         </style>
     """, unsafe_allow_html=True)
 
     logo_base64 = st.secrets["LOGO_BASE64"]
-    st.markdown(
-        f"""
-        <div style='text-align: center; margin-bottom: 1rem;'>
-            <img src="data:image/png;base64,{logo_base64.strip()}" style="max-height:45px;" />
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown(f"<div style='text-align: center; margin-bottom: 1rem;'><img src='data:image/png;base64,{logo_base64.strip()}' style='max-height:45px;' /></div>", unsafe_allow_html=True)
 
     correo = st.text_input("\U0001F511 Ingresa tu correo:")
 
@@ -121,30 +98,43 @@ def ver_rutinas():
 
         ejercicios.sort(key=ordenar_circuito)
 
-        opciones_ejercicios = []
-        for idx, e in enumerate(ejercicios):
-            circuito = e.get("circuito", "Z").upper()
-            seccion = "Warm-up" if circuito in ["A", "B", "C"] else "Workout"
-            opciones_ejercicios.append(f"{seccion} | {circuito} | {e['ejercicio']}")
-
         st.markdown("### Tabla de ejercicios")
         html_table = """
         <table class='tabla-rutina'>
-            <tr><th>Sección</th><th>Circuito</th><th>Ejercicio</th><th>Serie</th><th>Repeticiones</th><th>Peso</th></tr>
+        <tr><th>Sección</th><th>Circuito</th><th>Ejercicio</th><th>Serie</th><th>Repeticiones</th>{peso_header}</tr>
         """
+        peso_presente = any(e.get("peso") for e in ejercicios)
+        peso_header = "<th>Peso</th>" if peso_presente else ""
+        html_table = html_table.replace("{peso_header}", peso_header)
+
+        circuito_actual = None
         for e in ejercicios:
             circuito = e.get("circuito", "Z").upper()
             seccion = "Warm-up" if circuito in ["A", "B", "C"] else "Workout"
-            html_table += f"<tr><td>{seccion}</td><td>{circuito}</td><td>{e['ejercicio']}</td><td>{e.get('series','')}</td><td>{e.get('repeticiones','')}</td><td>{e.get('peso','')}</td></tr>"
+            if circuito_actual and circuito != circuito_actual:
+                html_table += "<tr class='tabla-sep'></tr>"
+            circuito_actual = circuito
+
+            peso_col = f"<td>{e.get('peso','')}</td>" if peso_presente else ""
+            html_table += f"<tr><td>{seccion}</td><td>{circuito}</td><td>{e['ejercicio']}</td><td>{e.get('series','')}</td><td>{e.get('repeticiones','')}</td>{peso_col}</tr>"
         html_table += "</table>"
         st.markdown(html_table, unsafe_allow_html=True)
+
+        opciones_ejercicios = []
+        for e in ejercicios:
+            circuito = e.get("circuito", "Z").upper()
+            seccion = "Warm-up" if circuito in ["A", "B", "C"] else "Workout"
+            objetivo = f"{e.get('series', 0)}x{e.get('repeticiones', 0)}"
+            if e.get("peso"): objetivo += f" @ {e['peso']}kg"
+            opciones_ejercicios.append(f"{seccion} | {circuito} | {e['ejercicio']} ({objetivo})")
 
         ejercicio_sel = st.radio("\u2705 Selecciona un ejercicio para editar:", opciones_ejercicios, key="ej_sel")
 
         ejercicio_idx = opciones_ejercicios.index(ejercicio_sel)
         e = ejercicios[ejercicio_idx]
 
-        st.markdown(f"**🎯 Objetivo:** {e.get('series', 0)} × {e.get('repeticiones', 0)} reps @ {e.get('peso', 0)} kg")
+        st.markdown(f"**🎯 Objetivo:** {e.get('series', 0)} × {e.get('repeticiones', 0)} reps" + (f" @ {e.get('peso')} kg" if e.get('peso') else ""))
+
         num_series = e.get("series") or 0
         registro_series = e.get("registro_series", [{}]*num_series)
 
