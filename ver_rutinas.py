@@ -27,6 +27,14 @@ def ver_rutinas():
     st.markdown("""
         <style>
         @media screen and (max-width: 768px) {
+            .desktop-view { display: none !important; }
+            .mobile-view { display: block !important; }
+        }
+        @media screen and (min-width: 769px) {
+            .desktop-view { display: block !important; }
+            .mobile-view { display: none !important; }
+        }
+        @media screen and (max-width: 768px) {
             .stButton>button {
                 padding: 0.25rem 0.75rem !important;
                 font-size: 12px !important;
