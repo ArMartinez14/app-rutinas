@@ -131,15 +131,15 @@ def crear_rutinas():
                                         ejercicio_mod[variable] = aplicar_progresion(valor_base, semana_idx, incremento, operacion, periodo)
 
                             data.append({
-                                "Circuito": ejercicio_mod["Circuito"],
-                                "Sección": ejercicio_mod["Sección"],
-                                "Ejercicio": ejercicio_mod["Ejercicio"],
-                                "Series": ejercicio_mod["Series"],
-                                "Repeticiones": ejercicio_mod["Repeticiones"],
-                                "Peso": ejercicio_mod["Peso"],
-                                "Velocidad": ejercicio_mod["Velocidad"],
-                                "RIR": ejercicio_mod["RIR"],
-                                "Tipo": ejercicio_mod["Tipo"]
+                                "bloque": ejercicio_mod["Sección"],
+                                "circuito": ejercicio_mod["Circuito"],
+                                "ejercicio": ejercicio_mod["Ejercicio"],
+                                "series": ejercicio_mod["Series"],
+                                "repeticiones": ejercicio_mod["Repeticiones"],
+                                "peso": ejercicio_mod["Peso"],
+                                "velocidad": ejercicio_mod["Velocidad"],
+                                "rir": ejercicio_mod["RIR"],
+                                "tipo": ejercicio_mod["Tipo"]
                             })
 
                         if data:
@@ -185,22 +185,22 @@ def crear_rutinas():
                         doc_id = f"{correo_normalizado}_{fecha_normalizada}_{dia_nombre}_{ejercicio['Circuito']}_{ejercicio['Ejercicio']}".lower().replace(" ", "_")
 
                         data = {
-                            "Nombre": nombre_normalizado,
-                            "Correo": correo,
-                            "Semana": str(semana + 1),
-                            "Fecha Inicio Semana": fecha_str,
-                            "Día": dia_nombre,
-                            "Sección": ejercicio_mod["Sección"],
-                            "Circuito": ejercicio_mod["Circuito"],
-                            "Ejercicio": ejercicio_mod["Ejercicio"],
-                            "Series": ejercicio_mod["Series"],
-                            "Repeticiones": ejercicio_mod["Repeticiones"],
-                            "Peso": ejercicio_mod["Peso"],
-                            "Velocidad": ejercicio_mod["Velocidad"],
-                            "RIR": ejercicio_mod["RIR"],
-                            "Progresión": ejercicio_mod["Progresión"],
-                            "Tipo": ejercicio_mod["Tipo"],
-                            "Entrenador": entrenador
+                            "cliente": nombre_normalizado,
+                            "correo": correo,
+                            "semana": str(semana + 1),
+                            "fecha_lunes": fecha_str,
+                            "dia": dia_nombre.split(" ")[-1],
+                            "bloque": ejercicio_mod["Sección"],
+                            "circuito": ejercicio_mod["Circuito"],
+                            "ejercicio": ejercicio_mod["Ejercicio"],
+                            "series": ejercicio_mod["Series"],
+                            "repeticiones": ejercicio_mod["Repeticiones"],
+                            "peso": ejercicio_mod["Peso"],
+                            "velocidad": ejercicio_mod["Velocidad"],
+                            "rir": ejercicio_mod["RIR"],
+                            "progresion": ejercicio_mod["Progresión"],
+                            "tipo": ejercicio_mod["Tipo"],
+                            "entrenador": entrenador
                         }
 
                         db.collection("rutinas").document(doc_id).set(data)
