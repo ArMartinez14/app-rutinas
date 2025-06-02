@@ -180,13 +180,13 @@ def ver_rutinas():
                 secciones_vistas.add(seccion)
 
             if prev_circuito and prev_circuito != circuito:
-                st.markdown("<hr style='border: 0; height: 1px; background: #666; margin: 0.5rem 0;'>", unsafe_allow_html=True)
+                st.markdown("<hr style='border: 0; height: 3px; background: #444; margin: 0.8rem 0;'>", unsafe_allow_html=True)
             prev_circuito = circuito
 
-            col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 3, 1, 1, 1, 1])
+            col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 3, 1, 1, 1, 1], gap="small")
             col1.write("")
-            col2.write(circuito)
-            col3.write(e['ejercicio'])
+            col2.markdown(f"<div style='text-align:center'>{circuito}</div>", unsafe_allow_html=True)
+            col3.markdown(f"<div style='text-align:center'>{e['ejercicio']}</div>", unsafe_allow_html=True)
             col4.markdown(f"<p style='font-size:16px; color:white;'><b>{e.get('series', '')}</b></p>", unsafe_allow_html=True)
             col5.markdown(f"<p style='font-size:16px; color:white;'><b>{e.get('repeticiones', '')}</b></p>", unsafe_allow_html=True)
             if peso_presente:
