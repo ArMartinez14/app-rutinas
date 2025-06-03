@@ -118,8 +118,6 @@ def crear_rutinas():
                 fila["Peso"] = cols[5].text_input("Peso", value=fila["Peso"], key=f"peso_{i}_{idx}")
                 fila["Velocidad"] = cols[6].text_input("Velocidad", value=fila["Velocidad"], key=f"vel_{i}_{idx}")
                 fila["RIR"] = cols[7].text_input("RIR", value=fila["RIR"], key=f"rir_{i}_{idx}")
-                progresiones_docs = db.collection("progresiones").stream()
-                opciones_progresion = [""] + sorted([doc.id for doc in progresiones_docs])
                 fila["Tipo"] = cols[8].text_input("Tipo", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
 
             # BLOQUE DE PROGRESIÓN PERSONALIZADA - SOLO PARA LA PRIMERA FILA COMO DEMO
