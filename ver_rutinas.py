@@ -73,6 +73,8 @@ def ver_rutinas():
     """, unsafe_allow_html=True)
 
     correo_guardado = streamlit_js_eval(js_expressions="localStorage.getItem('correo_usuario')", key="leer_correo")
+    cliente_guardado = streamlit_js_eval(js_expressions="localStorage.getItem('cliente_sel')", key="leer_cliente")
+    dia_guardado = streamlit_js_eval(js_expressions="localStorage.getItem('dia_sel')", key="leer_dia")
 
     if not correo_guardado:
         correo_input = st.text_input("🔑 Ingresa tu correo:")
@@ -82,11 +84,6 @@ def ver_rutinas():
         st.stop()
     else:
         correo = correo_guardado
-
-    params = st.experimental_get_query_params()
-    cliente_sel = params.get("cliente", [None])[0]
-    dia_sel = params.get("dia", [None])[0]
-    ejercicio_idx = int(params.get("ejercicio_idx", [-1])[0]) if "ejercicio_idx" in params else None
 
     doc_user = db.collection("usuarios").document(correo).get()
     if not doc_user.exists:
@@ -111,11 +108,11 @@ def ver_rutinas():
         st.stop()
 
     clientes = sorted(set(r["cliente"] for r in rutinas_list if "cliente" in r))
-    cliente_input = st.text_input("👤 Escribe el nombre del cliente:", key="cliente")
+    cliente_input = st.text_input("👤 Escribe el nombre del cliente:", value=cliente_guardado if cliente_guardado else "")
     cliente_opciones = [c for c in clientes if cliente_input.lower() in c.lower()]
-    cliente_sel = st.selectbox("O selecciona de la lista:", cliente_opciones if cliente_opciones else clientes)
+    cliente_sel = st.selectbox("O selecciona de la lista:", cliente_opciones if cliente_opciones else clientes, index=0)
 
-    st.experimental_set_query_params(cliente=cliente_sel)
+    streamlit_js_eval(js_expressions=f"localStorage.setItem('cliente_sel', '{cliente_sel}')", key="guardar_cliente")
 
     rutinas_cliente = [r for r in rutinas_list if r.get("cliente") == cliente_sel]
     semanas = sorted({r["fecha_lunes"] for r in rutinas_cliente}, reverse=True)
@@ -130,10 +127,12 @@ def ver_rutinas():
         st.stop()
 
     dias = sorted(set(r["dia"] for r in rutinas), key=lambda x: int(x))
-    dia_sel = st.selectbox("📅 Selecciona el día", dias, key="dia")
-    st.experimental_set_query_params(cliente=cliente_sel, dia=dia_sel)
+    dia_sel = st.selectbox("📅 Selecciona el día", dias, index=dias.index(dia_guardado) if dia_guardado in dias else 0)
+    streamlit_js_eval(js_expressions=f"localStorage.setItem('dia_sel', '{dia_sel}')", key="guardar_dia")
 
     ejercicios = [r for r in rutinas if r["dia"] == dia_sel]
+
+    # ... el resto del código continúa como ya está ...
 
     if ejercicios:
         semana_ciclo = ejercicios[0].get("semana_ciclo", "")
