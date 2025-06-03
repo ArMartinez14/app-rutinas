@@ -133,7 +133,7 @@ def crear_rutinas():
                                                 valor_num = float(valor_base)
                                                 ejercicio_mod[key] = aplicar_progresion(valor_num, semana_idx, incremento, operacion, periodo)
                                             except:
-                                            pass
+                                                pass
 
                             data.append({
                                 "bloque": ejercicio_mod["Sección"],
