@@ -9,53 +9,29 @@ if not firebase_admin._apps:
     cred = credentials.Certificate(st.secrets["FIREBASE_CREDENTIALS"])
     firebase_admin.initialize_app(cred)
 
-
 db = firestore.client()
-
 
 # === FUNCION DE PROGRESIÓN ===
 def aplicar_progresion(valor_inicial, semana, incremento, operacion, periodo):
     try:
         if semana == 0:
-            return valor_inicial  # semana base sin progresión
+            return valor_inicial  # semana base
 
-        veces = semana // periodo
-        resultado = float(valor_inicial)
+        if semana % periodo != 0:
+            return valor_inicial
 
-        for _ in range(veces):
-            if operacion == "suma":
-                resultado += incremento
-            elif operacion == "multiplicacion":
-                resultado *= incremento
-
-        return str(round(resultado, 2))
+        if operacion == "suma":
+            return str(float(valor_inicial) + incremento)
+        elif operacion == "multiplicacion":
+            return str(float(valor_inicial) * incremento)
+        else:
+            return valor_inicial
     except:
         return valor_inicial
-
-
-# === FUNCION DE PROGRESIÓN PERSONALIZADA ===
-def aplicar_progresion_personalizada(valor_base, cantidad, operacion):
-    try:
-        valor_base = float(valor_base)
-        cantidad = float(cantidad)
-        if operacion == "sumar":
-            return str(round(valor_base + cantidad, 2))
-        elif operacion == "restar":
-            return str(round(valor_base - cantidad, 2))
-        elif operacion == "multiplicar":
-            return str(round(valor_base * cantidad, 2))
-        elif operacion == "dividir":
-            return str(round(valor_base / cantidad, 2))
-        else:
-            return str(valor_base)
-    except:
-        return str(valor_base)
-
 
 # === FUNCION PARA NORMALIZAR TEXTO ===
 def normalizar_texto(texto):
     return ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
-
 
 def crear_rutinas():
     st.title("Crear nueva rutina")
@@ -87,12 +63,12 @@ def crear_rutinas():
 
     columnas_tabla = [
         "Circuito", "Sección", "Ejercicio", "Series", "Repeticiones",
-        "Peso", "Velocidad", "RIR", "Tipo"
+        "Peso", "Velocidad", "RIR", "Progresión", "Tipo"
     ]
 
     for i, tab in enumerate(tabs):
         with tab:
-            dia_key = f"rutina_dia_{i + 1}"
+            dia_key = f"rutina_dia_{i+1}"
             if dia_key not in st.session_state:
                 st.session_state[dia_key] = [{k: "" for k in columnas_tabla} for _ in range(8)]
 
@@ -106,52 +82,24 @@ def crear_rutinas():
                 cols = st.columns(len(columnas_tabla))
 
                 fila["Circuito"] = cols[0].selectbox("Circuito", ["A", "B", "C", "D", "E", "F", "G"],
-                                                     index=["A", "B", "C", "D", "E", "F", "G"].index(
-                                                         fila["Circuito"]) if fila["Circuito"] else 0,
-                                                     key=f"circ_{i}_{idx}")
+                                                    index=["A", "B", "C", "D", "E", "F", "G"].index(fila["Circuito"]) if fila["Circuito"] else 0,
+                                                    key=f"circ_{i}_{idx}")
                 fila["Sección"] = "Warm Up" if fila["Circuito"] in ["A", "B", "C"] else "Work Out"
                 cols[1].markdown(f"**{fila['Sección']}**")
 
                 fila["Ejercicio"] = cols[2].text_input("Ejercicio", value=fila["Ejercicio"], key=f"ej_{i}_{idx}")
-                fila["Series"] = cols[3].number_input("Series", min_value=1, max_value=10,
-                                                      value=int(fila["Series"] or 3), key=f"ser_{i}_{idx}")
+                fila["Series"] = cols[3].number_input("Series", min_value=1, max_value=10, value=int(fila["Series"] or 3), key=f"ser_{i}_{idx}")
                 fila["Repeticiones"] = cols[4].text_input("Reps", value=fila["Repeticiones"], key=f"rep_{i}_{idx}")
                 fila["Peso"] = cols[5].text_input("Peso", value=fila["Peso"], key=f"peso_{i}_{idx}")
                 fila["Velocidad"] = cols[6].text_input("Velocidad", value=fila["Velocidad"], key=f"vel_{i}_{idx}")
                 fila["RIR"] = cols[7].text_input("RIR", value=fila["RIR"], key=f"rir_{i}_{idx}")
-                fila["Tipo"] = cols[8].text_input("Tipo", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
-
-                # BLOQUE DE PROGRESIÓN PERSONALIZADA - SOLO PARA LA PRIMERA FILA COMO DEMO
-                if idx == 0:
-                    st.markdown("**Progresión personalizada:**")
-                    colp1, colp2, colp3 = st.columns(3)
-                    variable_sel = colp1.selectbox("Variable a modificar", ["peso", "velocidad", "repeticiones"],
-                                                   key=f"var_mod_{i}_{idx}")
-                    cantidad_sel = colp2.text_input("Cantidad", key=f"cant_mod_{i}_{idx}")
-                    operacion_sel = colp3.selectbox("Operación", ["sumar", "restar", "multiplicar", "dividir"],
-                                                    key=f"op_mod_{i}_{idx}")
-
-                    semanas_disp = [f"Semana {s}" for s in range(2, int(semanas) + 1)]
-                    st.markdown("**Semanas a aplicar**")
-                    col_check = st.columns(len(semanas_disp) + 1)
-                    aplicar_todas = col_check[0].checkbox("Todas", key=f"todas_sem_{i}_{idx}")
-                    semanas_sel = []
-                    for j, semana in enumerate(semanas_disp):
-                        check = col_check[j + 1].checkbox(semana, key=f"sem_{semana}_{i}_{idx}", value=aplicar_todas)
-                        if check:
-                            semanas_sel.append(j + 2)
-
-                    fila["progresion_custom"] = {
-                        "variable": variable_sel,
-                        "cantidad": cantidad_sel,
-                        "operacion": operacion_sel,
-                        "semanas": semanas_sel
-                    }
+                fila["Progresión"] = cols[8].text_input("Progresión", value=fila["Progresión"], key=f"prog_{i}_{idx}")
+                fila["Tipo"] = cols[9].text_input("Tipo", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
 
     st.markdown("---")
 
     if st.button("Previsualizar rutina"):
-        semana_tabs = st.tabs([f"Semana {i + 1}" for i in range(int(semanas))])
+        semana_tabs = st.tabs([f"Semana {i+1}" for i in range(int(semanas))])
 
         for semana_idx, tab_semana in enumerate(semana_tabs):
             with tab_semana:
@@ -163,12 +111,24 @@ def crear_rutinas():
                 for i, tab_dia in enumerate(dia_tabs):
                     with tab_dia:
                         dia_nombre = dias[i]
-                        dia_key = f"rutina_dia_{i + 1}"
+                        dia_key = f"rutina_dia_{i+1}"
                         ejercicios = st.session_state.get(dia_key, [])
 
                         data = []
                         for ejercicio in ejercicios:
                             ejercicio_mod = ejercicio.copy()
+                            nombre_prog = ejercicio["Progresión"].strip()
+                            if nombre_prog:
+                                doc_prog = db.collection("progresiones").document(nombre_prog).get()
+                                if doc_prog.exists:
+                                    prog = doc_prog.to_dict()
+                                    variable = prog.get("variable", "").lower()
+                                    incremento = float(prog.get("incremento", 0))
+                                    operacion = prog.get("operacion", "").lower()
+                                    periodo = int(prog.get("periodo", 1))
+                                    if variable in ejercicio_mod:
+                                        valor_base = ejercicio[variable].strip()
+                                        ejercicio_mod[variable] = aplicar_progresion(valor_base, semana_idx, incremento, operacion, periodo)
 
                             data.append({
                                 "bloque": ejercicio_mod["Sección"],
@@ -202,14 +162,27 @@ def crear_rutinas():
 
                 for i in range(len(dias)):
                     dia_nombre = dias[i]
-                    dia_key = f"rutina_dia_{i + 1}"
+                    dia_key = f"rutina_dia_{i+1}"
                     ejercicios = st.session_state.get(dia_key, [])
 
                     for ejercicio in ejercicios:
                         ejercicio_mod = ejercicio.copy()
+                        nombre_prog = ejercicio["Progresión"].strip()
 
-                        doc_id = f"{correo_normalizado}_{fecha_normalizada}_{dia_nombre}_{ejercicio['Circuito']}_{ejercicio['Ejercicio']}".lower().replace(
-                            " ", "_")
+                        if nombre_prog:
+                            doc_prog = db.collection("progresiones").document(nombre_prog).get()
+                            if doc_prog.exists:
+                                prog = doc_prog.to_dict()
+                                variable = prog.get("variable", "").lower()
+                                incremento = float(prog.get("incremento", 0))
+                                operacion = prog.get("operacion", "").lower()
+                                periodo = int(prog.get("periodo", 1))
+
+                                if variable in ejercicio_mod:
+                                    valor_base = ejercicio[variable].strip()
+                                    ejercicio_mod[variable] = aplicar_progresion(valor_base, semana, incremento, operacion, periodo)
+
+                        doc_id = f"{correo_normalizado}_{fecha_normalizada}_{dia_nombre}_{ejercicio['Circuito']}_{ejercicio['Ejercicio']}".lower().replace(" ", "_")
 
                         data = {
                             "cliente": nombre_normalizado,
@@ -225,6 +198,7 @@ def crear_rutinas():
                             "peso": ejercicio_mod["Peso"],
                             "velocidad": ejercicio_mod["Velocidad"],
                             "rir": ejercicio_mod["RIR"],
+                            "progresion": ejercicio_mod["Progresión"],
                             "tipo": ejercicio_mod["Tipo"],
                             "entrenador": entrenador
                         }
