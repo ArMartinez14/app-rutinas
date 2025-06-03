@@ -28,6 +28,20 @@ def aplicar_progresion(valor_inicial, semana, incremento, operacion, periodo):
 
         return str(round(resultado, 2))
     except:
+        return valor_inicial
+# semana base sin progresión
+
+        veces = semana // periodo
+        resultado = float(valor_inicial)
+
+        for _ in range(veces):
+            if operacion == "suma":
+                resultado += incremento
+            elif operacion == "multiplicacion":
+                resultado *= incremento
+
+        return str(round(resultado, 2))
+    except:
         return valor_inicial  # semana base
 
         if semana % periodo != 0:
