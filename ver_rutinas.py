@@ -5,7 +5,6 @@ def ver_rutinas():
     from datetime import datetime, timedelta
     import json
     import os
-    from streamlit_js_eval import streamlit_js_eval
 
     if not firebase_admin._apps:
         cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
@@ -58,22 +57,11 @@ def ver_rutinas():
         </style>
     """, unsafe_allow_html=True)
 
-    correo_guardado = streamlit_js_eval(js_expressions="localStorage.getItem('correo_usuario')", key="leer_correo")
-
-    if not correo_guardado:
-        correo_input = st.text_input("🔑 Ingresa tu correo:")
-        if correo_input:
-            streamlit_js_eval(js_expressions=f"localStorage.setItem('correo_usuario', '{correo_input.strip().lower()}')", key="guardar_correo")
-            st.rerun()
+    correo = st.text_input("🔑 Ingresa tu correo:")
+    if not correo:
         st.stop()
-    else:
-        correo = correo_guardado
 
-    params = st.experimental_get_query_params()
-    cliente_sel = params.get("cliente", [None])[0]
-    dia_sel = params.get("dia", [None])[0]
-    ejercicio_idx = int(params.get("ejercicio_idx", [-1])[0]) if "ejercicio_idx" in params else None
-
+    correo = correo.strip().lower()
     doc_user = db.collection("usuarios").document(correo).get()
     if not doc_user.exists:
         st.error("❌ Este correo no está registrado.")
@@ -97,11 +85,9 @@ def ver_rutinas():
         st.stop()
 
     clientes = sorted(set(r["cliente"] for r in rutinas_list if "cliente" in r))
-    cliente_input = st.text_input("👤 Escribe el nombre del cliente:", key="cliente")
+    cliente_input = st.text_input("👤 Escribe el nombre del cliente:")
     cliente_opciones = [c for c in clientes if cliente_input.lower() in c.lower()]
     cliente_sel = st.selectbox("O selecciona de la lista:", cliente_opciones if cliente_opciones else clientes)
-
-    st.experimental_set_query_params(cliente=cliente_sel)
 
     rutinas_cliente = [r for r in rutinas_list if r.get("cliente") == cliente_sel]
     semanas = sorted({r["fecha_lunes"] for r in rutinas_cliente}, reverse=True)
@@ -117,7 +103,6 @@ def ver_rutinas():
 
     dias = sorted(set(r["dia"] for r in rutinas), key=lambda x: int(x))
     dia_sel = st.selectbox("📅 Selecciona el día", dias, key="dia")
-    st.experimental_set_query_params(cliente=cliente_sel, dia=dia_sel)
 
     ejercicios = [r for r in rutinas if r["dia"] == dia_sel]
 
@@ -155,10 +140,9 @@ def ver_rutinas():
         col6.markdown(f"<p style='font-size:16px; color:white; text-align:center'><b>{e.get('peso') if e.get('peso') else ''}</b></p>", unsafe_allow_html=True)
 
         if col7.button(f"Editar", key=f"editar_{idx}"):
-            st.experimental_set_query_params(cliente=cliente_sel, dia=dia_sel, ejercicio_idx=idx)
             st.session_state.ejercicio_idx = idx
 
-        if ejercicio_idx == idx:
+        if st.session_state.get("ejercicio_idx") == idx:
             num_series = e.get("series") or 0
             registro_series = e.get("registro_series", [{}]*num_series)
 
