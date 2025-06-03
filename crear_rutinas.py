@@ -120,57 +120,102 @@ def crear_rutinas():
                 fila["RIR"] = cols[7].text_input("RIR", value=fila["RIR"], key=f"rir_{i}_{idx}")
                 fila["Tipo"] = cols[8].text_input("Tipo", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
 
-            # BLOQUE DE PROGRESIÓN PERSONALIZADA - SOLO PARA LA PRIMERA FILA COMO DEMO
-            if idx == 0:
-                st.markdown("**Progresión personalizada:**")
-                colp1, colp2, colp3 = st.columns(3)
-                variable_sel = colp1.selectbox("Variable a modificar", ["peso", "velocidad", "repeticiones"],
-                                               key=f"var_mod_{i}_{idx}")
-                cantidad_sel = colp2.text_input("Cantidad", key=f"cant_mod_{i}_{idx}")
-                operacion_sel = colp3.selectbox("Operación", ["sumar", "restar", "multiplicar", "dividir"],
-                                                key=f"op_mod_{i}_{idx}")
+                # BLOQUE DE PROGRESIÓN PERSONALIZADA - SOLO PARA LA PRIMERA FILA COMO DEMO
+                if idx == 0:
+                    st.markdown("**Progresión personalizada:**")
+                    colp1, colp2, colp3 = st.columns(3)
+                    variable_sel = colp1.selectbox("Variable a modificar", ["peso", "velocidad", "repeticiones"],
+                                                   key=f"var_mod_{i}_{idx}")
+                    cantidad_sel = colp2.text_input("Cantidad", key=f"cant_mod_{i}_{idx}")
+                    operacion_sel = colp3.selectbox("Operación", ["sumar", "restar", "multiplicar", "dividir"],
+                                                    key=f"op_mod_{i}_{idx}")
 
-                semanas_disp = [f"Semana {s}" for s in range(2, int(semanas) + 1)]
-                st.markdown("**Semanas a aplicar**")
-                col_check = st.columns(len(semanas_disp) + 1)
-                aplicar_todas = col_check[0].checkbox("Todas", key=f"todas_sem_{i}_{idx}")
-                semanas_sel = []
-                for j, semana in enumerate(semanas_disp):
-                    check = col_check[j + 1].checkbox(semana, key=f"sem_{semana}_{i}_{idx}", value=aplicar_todas)
-                    if check:
-                        semanas_sel.append(j + 2)
+                    semanas_disp = [f"Semana {s}" for s in range(2, int(semanas) + 1)]
+                    st.markdown("**Semanas a aplicar**")
+                    col_check = st.columns(len(semanas_disp) + 1)
+                    aplicar_todas = col_check[0].checkbox("Todas", key=f"todas_sem_{i}_{idx}")
+                    semanas_sel = []
+                    for j, semana in enumerate(semanas_disp):
+                        check = col_check[j + 1].checkbox(semana, key=f"sem_{semana}_{i}_{idx}", value=aplicar_todas)
+                        if check:
+                            semanas_sel.append(j + 2)
 
-                fila["progresion_custom"] = {
-                    "variable": variable_sel,
-                    "cantidad": cantidad_sel,
-                    "operacion": operacion_sel,
-                    "semanas": semanas_sel
-                }
+                    fila["progresion_custom"] = {
+                        "variable": variable_sel,
+                        "cantidad": cantidad_sel,
+                        "operacion": operacion_sel,
+                        "semanas": semanas_sel
+                    }
 
+    st.markdown("---")
 
-st.markdown("---")
+    if st.button("Previsualizar rutina"):
+        semana_tabs = st.tabs([f"Semana {i + 1}" for i in range(int(semanas))])
 
-if st.button("Previsualizar rutina"):
-    semana_tabs = st.tabs([f"Semana {i + 1}" for i in range(int(semanas))])
+        for semana_idx, tab_semana in enumerate(semana_tabs):
+            with tab_semana:
+                fecha_semana = fecha_inicio + timedelta(weeks=semana_idx)
+                fecha_str = fecha_semana.strftime("%Y-%m-%d")
+                st.caption(f"Inicio de semana: {fecha_str}")
 
-    for semana_idx, tab_semana in enumerate(semana_tabs):
-        with tab_semana:
-            fecha_semana = fecha_inicio + timedelta(weeks=semana_idx)
-            fecha_str = fecha_semana.strftime("%Y-%m-%d")
-            st.caption(f"Inicio de semana: {fecha_str}")
+                dia_tabs = st.tabs(dias)
+                for i, tab_dia in enumerate(dia_tabs):
+                    with tab_dia:
+                        dia_nombre = dias[i]
+                        dia_key = f"rutina_dia_{i + 1}"
+                        ejercicios = st.session_state.get(dia_key, [])
 
-            dia_tabs = st.tabs(dias)
-            for i, tab_dia in enumerate(dia_tabs):
-                with tab_dia:
+                        data = []
+                        for ejercicio in ejercicios:
+                            ejercicio_mod = ejercicio.copy()
+
+                            data.append({
+                                "bloque": ejercicio_mod["Sección"],
+                                "circuito": ejercicio_mod["Circuito"],
+                                "ejercicio": ejercicio_mod["Ejercicio"],
+                                "series": ejercicio_mod["Series"],
+                                "repeticiones": ejercicio_mod["Repeticiones"],
+                                "peso": ejercicio_mod["Peso"],
+                                "velocidad": ejercicio_mod["Velocidad"],
+                                "rir": ejercicio_mod["RIR"],
+                                "tipo": ejercicio_mod["Tipo"]
+                            })
+
+                        if data:
+                            st.dataframe(data, use_container_width=True)
+
+    st.markdown("---")
+
+    if st.button("Generar rutina completa"):
+        if not nombre_sel or not correo or not entrenador:
+            st.warning("Faltan datos obligatorios: nombre, correo o entrenador.")
+            return
+
+        try:
+            for semana in range(int(semanas)):
+                fecha_semana = fecha_inicio + timedelta(weeks=semana)
+                fecha_str = fecha_semana.strftime("%Y-%m-%d")
+                fecha_normalizada = fecha_semana.strftime("%Y_%m_%d")
+                correo_normalizado = correo.replace("@", "_").replace(".", "_")
+                nombre_normalizado = normalizar_texto(nombre_sel)
+
+                for i in range(len(dias)):
                     dia_nombre = dias[i]
                     dia_key = f"rutina_dia_{i + 1}"
                     ejercicios = st.session_state.get(dia_key, [])
 
-                    data = []
                     for ejercicio in ejercicios:
                         ejercicio_mod = ejercicio.copy()
 
-                        data.append({
+                        doc_id = f"{correo_normalizado}_{fecha_normalizada}_{dia_nombre}_{ejercicio['Circuito']}_{ejercicio['Ejercicio']}".lower().replace(
+                            " ", "_")
+
+                        data = {
+                            "cliente": nombre_normalizado,
+                            "correo": correo,
+                            "semana": str(semana + 1),
+                            "fecha_lunes": fecha_str,
+                            "dia": dia_nombre.split(" ")[-1],
                             "bloque": ejercicio_mod["Sección"],
                             "circuito": ejercicio_mod["Circuito"],
                             "ejercicio": ejercicio_mod["Ejercicio"],
@@ -179,58 +224,12 @@ if st.button("Previsualizar rutina"):
                             "peso": ejercicio_mod["Peso"],
                             "velocidad": ejercicio_mod["Velocidad"],
                             "rir": ejercicio_mod["RIR"],
-                            "tipo": ejercicio_mod["Tipo"]
-                        })
+                            "tipo": ejercicio_mod["Tipo"],
+                            "entrenador": entrenador
+                        }
 
-                    if data:
-                        st.dataframe(data, use_container_width=True)
+                        db.collection("rutinas").document(doc_id).set(data)
 
-st.markdown("---")
-
-if st.button("Generar rutina completa"):
-    if not nombre_sel or not correo or not entrenador:
-        st.warning("Faltan datos obligatorios: nombre, correo o entrenador.")
-        return
-
-    try:
-        for semana in range(int(semanas)):
-            fecha_semana = fecha_inicio + timedelta(weeks=semana)
-            fecha_str = fecha_semana.strftime("%Y-%m-%d")
-            fecha_normalizada = fecha_semana.strftime("%Y_%m_%d")
-            correo_normalizado = correo.replace("@", "_").replace(".", "_")
-            nombre_normalizado = normalizar_texto(nombre_sel)
-
-            for i in range(len(dias)):
-                dia_nombre = dias[i]
-                dia_key = f"rutina_dia_{i + 1}"
-                ejercicios = st.session_state.get(dia_key, [])
-
-                for ejercicio in ejercicios:
-                    ejercicio_mod = ejercicio.copy()
-
-                    doc_id = f"{correo_normalizado}_{fecha_normalizada}_{dia_nombre}_{ejercicio['Circuito']}_{ejercicio['Ejercicio']}".lower().replace(
-                        " ", "_")
-
-                    data = {
-                        "cliente": nombre_normalizado,
-                        "correo": correo,
-                        "semana": str(semana + 1),
-                        "fecha_lunes": fecha_str,
-                        "dia": dia_nombre.split(" ")[-1],
-                        "bloque": ejercicio_mod["Sección"],
-                        "circuito": ejercicio_mod["Circuito"],
-                        "ejercicio": ejercicio_mod["Ejercicio"],
-                        "series": ejercicio_mod["Series"],
-                        "repeticiones": ejercicio_mod["Repeticiones"],
-                        "peso": ejercicio_mod["Peso"],
-                        "velocidad": ejercicio_mod["Velocidad"],
-                        "rir": ejercicio_mod["RIR"],
-                        "tipo": ejercicio_mod["Tipo"],
-                        "entrenador": entrenador
-                    }
-
-                    db.collection("rutinas").document(doc_id).set(data)
-
-        st.success(f"✅ Rutina generada correctamente para {semanas} semanas.")
-    except Exception as e:
-        st.error(f"❌ Error al guardar la rutina: {e}")
+            st.success(f"✅ Rutina generada correctamente para {semanas} semanas.")
+        except Exception as e:
+            st.error(f"❌ Error al guardar la rutina: {e}")
