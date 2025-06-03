@@ -4,11 +4,14 @@ def ver_rutinas():
     from firebase_admin import credentials, firestore
     from datetime import datetime, timedelta
     import json
+    import os
     from streamlit_js_eval import streamlit_js_eval
 
     if not firebase_admin._apps:
         cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
-        cred = credentials.Certificate(cred_dict)
+        with open("/tmp/firebase.json", "w") as f:
+            json.dump(cred_dict, f)
+        cred = credentials.Certificate("/tmp/firebase.json")
         firebase_admin.initialize_app(cred)
 
     db = firestore.client()
@@ -27,30 +30,13 @@ def ver_rutinas():
 
     st.markdown("""
         <style>
-        @media screen and (max-width: 768px) {
-            .desktop-view { display: none !important; }
-            .mobile-view { display: block !important; }
+        .stMarkdown, .stTextInput, .stSelectbox, .stTextArea {
+            font-size: 13px !important;
         }
-        @media screen and (min-width: 769px) {
-            .desktop-view { display: block !important; }
-            .mobile-view { display: none !important; }
-        }
-        @media screen and (max-width: 768px) {
-            .stButton>button {
-                padding: 0.25rem 0.75rem !important;
-                font-size: 12px !important;
-            }
-            .stMarkdown, .stTextInput, .stSelectbox, .stTextArea {
-                font-size: 13px !important;
-            }
-            .block-container {
-                padding: 0.5rem !important;
-            }
-            .compact-input input {
-                width: 30px !important;
-                font-size: 11px !important;
-                padding: 2px !important;
-            }
+        .compact-input input {
+            width: 30px !important;
+            font-size: 11px !important;
+            padding: 2px !important;
         }
         .tabla-rutina td, .tabla-rutina th {
             padding: 4px 8px;
@@ -214,3 +200,4 @@ def ver_rutinas():
                     st.success("✅ Registro actualizado exitosamente.")
                 except Exception as error:
                     st.error("❌ No se pudo guardar. Es posible que el documento no exista con ese ID.")
+                    st.exception(error)
