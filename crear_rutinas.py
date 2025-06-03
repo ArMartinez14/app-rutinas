@@ -5,8 +5,10 @@ from datetime import datetime, timedelta
 import unicodedata
 
 # === INICIALIZAR FIREBASE ===
+import json
 if not firebase_admin._apps:
-    cred = credentials.Certificate(st.secrets["FIREBASE_CREDENTIALS"])
+    cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
+    cred = credentials.Certificate(cred_dict)
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
