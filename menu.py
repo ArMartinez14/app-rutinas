@@ -3,7 +3,6 @@ from ver_rutinas import ver_rutinas
 from crear_rutinas import crear_rutinas
 
 def mostrar_menu():
-    st.set_page_config(page_title="Motion Center", layout="wide")
 
     # Estado para mostrar/ocultar menú
     if "mostrar_menu" not in st.session_state:
