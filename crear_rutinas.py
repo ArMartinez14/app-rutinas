@@ -30,6 +30,24 @@ def aplicar_progresion(valor_inicial, semana, incremento, operacion, periodo):
     except:
         return valor_inicial
 
+# === FUNCION DE PROGRESIÓN PERSONALIZADA ===
+def aplicar_progresion_personalizada(valor_base, cantidad, operacion):
+    try:
+        valor_base = float(valor_base)
+        cantidad = float(cantidad)
+        if operacion == "sumar":
+            return str(round(valor_base + cantidad, 2))
+        elif operacion == "restar":
+            return str(round(valor_base - cantidad, 2))
+        elif operacion == "multiplicar":
+            return str(round(valor_base * cantidad, 2))
+        elif operacion == "dividir":
+            return str(round(valor_base / cantidad, 2))
+        else:
+            return str(valor_base)
+    except:
+        return str(valor_base)
+
 # === FUNCION PARA NORMALIZAR TEXTO ===
 def normalizar_texto(texto):
     return ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
@@ -98,6 +116,31 @@ def crear_rutinas():
                 opciones_progresion = [""] + sorted([doc.id for doc in progresiones_docs])
                 fila["Progresión"] = cols[8].selectbox("Progresión", opciones_progresion, index=opciones_progresion.index(fila["Progresión"]) if fila["Progresión"] in opciones_progresion else 0, key=f"prog_{i}_{idx}")
                 fila["Tipo"] = cols[9].text_input("Tipo", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
+
+                # BLOQUE DE PROGRESIÓN PERSONALIZADA - SOLO PARA LA PRIMERA FILA COMO DEMO
+                if idx == 0:
+                    st.markdown("**Progresión personalizada:**")
+                    colp1, colp2, colp3 = st.columns(3)
+                    variable_sel = colp1.selectbox("Variable a modificar", ["peso", "velocidad", "repeticiones"], key=f"var_mod_{i}_{idx}")
+                    cantidad_sel = colp2.text_input("Cantidad", key=f"cant_mod_{i}_{idx}")
+                    operacion_sel = colp3.selectbox("Operación", ["sumar", "restar", "multiplicar", "dividir"], key=f"op_mod_{i}_{idx}")
+
+                    semanas_disp = [f"Semana {s}" for s in range(2, int(semanas)+1)]
+                    st.markdown("**Semanas a aplicar**")
+                    col_check = st.columns(len(semanas_disp) + 1)
+                    aplicar_todas = col_check[0].checkbox("Todas", key=f"todas_sem_{i}_{idx}")
+                    semanas_sel = []
+                    for j, semana in enumerate(semanas_disp):
+                        check = col_check[j+1].checkbox(semana, key=f"sem_{semana}_{i}_{idx}", value=aplicar_todas)
+                        if check:
+                            semanas_sel.append(j + 2)
+
+                    fila["progresion_custom"] = {
+                        "variable": variable_sel,
+                        "cantidad": cantidad_sel,
+                        "operacion": operacion_sel,
+                        "semanas": semanas_sel
+                    }
 
     st.markdown("---")
 
