@@ -183,9 +183,14 @@ def crear_rutinas():
                                 operacion = prog.get("operacion", "").lower()
                                 periodo = int(prog.get("periodo", 1))
 
-                                if variable in ejercicio_mod:
-                                    valor_base = ejercicio[variable].strip()
-                                    ejercicio_mod[variable] = aplicar_progresion(valor_base, semana, incremento, operacion, periodo)
+                                for key in ejercicio_mod:
+                                    if key.lower() == variable:
+                                        valor_base = ejercicio_mod[key].strip()
+                                        try:
+                                            valor_num = float(valor_base)
+                                            ejercicio_mod[key] = aplicar_progresion(valor_num, semana, incremento, operacion, periodo)
+                                        except:
+                                            pass
 
                         doc_id = f"{correo_normalizado}_{fecha_normalizada}_{dia_nombre}_{ejercicio['Circuito']}_{ejercicio['Ejercicio']}".lower().replace(" ", "_")
 
