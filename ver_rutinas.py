@@ -214,4 +214,3 @@ def ver_rutinas():
                     st.success("✅ Registro actualizado exitosamente.")
                 except Exception as error:
                     st.error("❌ No se pudo guardar. Es posible que el documento no exista con ese ID.")
-                    st.exception(error)
