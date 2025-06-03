@@ -94,7 +94,9 @@ def crear_rutinas():
                 fila["Peso"] = cols[5].text_input("Peso", value=fila["Peso"], key=f"peso_{i}_{idx}")
                 fila["Velocidad"] = cols[6].text_input("Velocidad", value=fila["Velocidad"], key=f"vel_{i}_{idx}")
                 fila["RIR"] = cols[7].text_input("RIR", value=fila["RIR"], key=f"rir_{i}_{idx}")
-                fila["Progresión"] = cols[8].text_input("Progresión", value=fila["Progresión"], key=f"prog_{i}_{idx}")
+                progresiones_docs = db.collection("progresiones").stream()
+                opciones_progresion = [""] + sorted([doc.id for doc in progresiones_docs])
+                fila["Progresión"] = cols[8].selectbox("Progresión", opciones_progresion, index=opciones_progresion.index(fila["Progresión"]) if fila["Progresión"] in opciones_progresion else 0, key=f"prog_{i}_{idx}")
                 fila["Tipo"] = cols[9].text_input("Tipo", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
 
     st.markdown("---")
