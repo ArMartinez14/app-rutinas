@@ -4,8 +4,8 @@ def ver_rutinas():
     from firebase_admin import credentials, firestore
     from datetime import datetime, timedelta
     import json
-    import os
     from streamlit_js_eval import streamlit_js_eval
+    import os
 
     if not firebase_admin._apps:
         cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
