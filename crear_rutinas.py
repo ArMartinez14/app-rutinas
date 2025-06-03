@@ -115,15 +115,25 @@ def crear_rutinas():
                         ejercicios = st.session_state.get(dia_key, [])
 
                         data = []
-                        for key in ejercicio_mod:
-                            if key.lower() == variable:
-                                valor_base = ejercicio_mod[key].strip()
-                                try:
-                                    valor_num = float(valor_base)
-                                    ejercicio_mod[key] = aplicar_progresion(valor_num, semana_idx, incremento,
-                                                                            operacion, periodo)
-                                except:
-                                    pass
+                        for ejercicio in ejercicios:
+                            ejercicio_mod = ejercicio.copy()
+                            nombre_prog = ejercicio["Progresión"].strip()
+                            if nombre_prog:
+                                doc_prog = db.collection("progresiones").document(nombre_prog).get()
+                                if doc_prog.exists:
+                                    prog = doc_prog.to_dict()
+                                    variable = prog.get("variable", "").lower()
+                                    incremento = float(prog.get("incremento", 0))
+                                    operacion = prog.get("operacion", "").lower()
+                                    periodo = int(prog.get("periodo", 1))
+                                    for key in ejercicio_mod:
+                                        if key.lower() == variable:
+                                            valor_base = ejercicio_mod[key].strip()
+                                            try:
+                                                valor_num = float(valor_base)
+                                                ejercicio_mod[key] = aplicar_progresion(valor_num, semana_idx, incremento, operacion, periodo)
+                                            except:
+                                            pass
 
                             data.append({
                                 "bloque": ejercicio_mod["Sección"],
