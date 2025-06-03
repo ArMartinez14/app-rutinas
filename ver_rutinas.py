@@ -4,7 +4,7 @@ def ver_rutinas():
     from firebase_admin import credentials, firestore
     from datetime import datetime, timedelta
     import json
-    from streamlit_javascript import st_javascript
+    from streamlit_js_eval import streamlit_js_eval
 
     if not firebase_admin._apps:
         cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
@@ -72,142 +72,146 @@ def ver_rutinas():
         </style>
     """, unsafe_allow_html=True)
 
-    js = """
-        async function getEmail() {
-            let correo = localStorage.getItem("correo") || "";
-            const correoInput = await window.prompt("Ingresa tu correo:", correo);
-            if (correoInput) {
-                localStorage.setItem("correo", correoInput);
-            }
-            return correoInput;
-        }
-        getEmail();
-    """
-    correo = st_javascript(js)
+    correo_guardado = streamlit_js_eval(js_expressions="localStorage.getItem('correo_usuario')", key="leer_correo")
 
-    if correo:
-        correo = correo.strip().lower()
-        doc_user = db.collection("usuarios").document(correo).get()
-        if not doc_user.exists:
-            st.error("❌ Este correo no está registrado.")
-            st.stop()
+    if not correo_guardado:
+        correo_input = st.text_input("🔑 Ingresa tu correo:")
+        if correo_input:
+            streamlit_js_eval(js_expressions=f"localStorage.setItem('correo_usuario', '{correo_input.strip().lower()}')", key="guardar_correo")
+            st.rerun()
+        st.stop()
+    else:
+        correo = correo_guardado
 
-        datos_usuario = doc_user.to_dict()
-        nombre = datos_usuario.get("nombre", "Usuario")
-        rol = datos_usuario.get("rol", "desconocido")
+    params = st.experimental_get_query_params()
+    cliente_sel = params.get("cliente", [None])[0]
+    dia_sel = params.get("dia", [None])[0]
+    ejercicio_idx = int(params.get("ejercicio_idx", [-1])[0]) if "ejercicio_idx" in params else None
 
-        st.success(f"Bienvenido {nombre} ({rol})")
+    doc_user = db.collection("usuarios").document(correo).get()
+    if not doc_user.exists:
+        st.error("❌ Este correo no está registrado.")
+        st.stop()
 
-        if es_entrenador(rol):
-            todas_rutinas = db.collection("rutinas").stream()
-        else:
-            todas_rutinas = db.collection("rutinas").where("correo", "==", correo).stream()
+    datos_usuario = doc_user.to_dict()
+    nombre = datos_usuario.get("nombre", "Usuario")
+    rol = datos_usuario.get("rol", "desconocido")
 
-        rutinas_list = [r.to_dict() for r in todas_rutinas]
+    st.success(f"Bienvenido {nombre} ({rol})")
 
-        if not rutinas_list:
-            st.warning("⚠️ No se encontraron rutinas registradas.")
-            st.stop()
+    if es_entrenador(rol):
+        todas_rutinas = db.collection("rutinas").stream()
+    else:
+        todas_rutinas = db.collection("rutinas").where("correo", "==", correo).stream()
 
-        clientes = sorted(set(r["cliente"] for r in rutinas_list if "cliente" in r))
-        cliente_input = st.text_input("👤 Escribe el nombre del cliente:", key="cliente")
-        cliente_opciones = [c for c in clientes if cliente_input.lower() in c.lower()]
-        cliente_sel = st.selectbox("O selecciona de la lista:", cliente_opciones if cliente_opciones else clientes)
+    rutinas_list = [r.to_dict() for r in todas_rutinas]
 
-        rutinas_cliente = [r for r in rutinas_list if r.get("cliente") == cliente_sel]
-        semanas = sorted({r["fecha_lunes"] for r in rutinas_cliente}, reverse=True)
+    if not rutinas_list:
+        st.warning("⚠️ No se encontraron rutinas registradas.")
+        st.stop()
 
-        semana_actual = obtener_fecha_lunes()
-        semana_sel = st.selectbox("📆 Selecciona la semana", semanas, index=semanas.index(semana_actual) if semana_actual in semanas else 0, key="semana")
+    clientes = sorted(set(r["cliente"] for r in rutinas_list if "cliente" in r))
+    cliente_input = st.text_input("👤 Escribe el nombre del cliente:", key="cliente")
+    cliente_opciones = [c for c in clientes if cliente_input.lower() in c.lower()]
+    cliente_sel = st.selectbox("O selecciona de la lista:", cliente_opciones if cliente_opciones else clientes)
 
-        rutinas = [r for r in rutinas_cliente if r["fecha_lunes"] == semana_sel]
+    st.experimental_set_query_params(cliente=cliente_sel)
 
-        if not rutinas:
-            st.warning("⚠️ No hay rutinas registradas para esta semana.")
-            st.stop()
+    rutinas_cliente = [r for r in rutinas_list if r.get("cliente") == cliente_sel]
+    semanas = sorted({r["fecha_lunes"] for r in rutinas_cliente}, reverse=True)
 
-        dias = sorted(set(r["dia"] for r in rutinas), key=lambda x: int(x))
-        dia_sel = st.selectbox("📅 Selecciona el día", dias, key="dia")
+    semana_actual = obtener_fecha_lunes()
+    semana_sel = st.selectbox("📆 Selecciona la semana", semanas, index=semanas.index(semana_actual) if semana_actual in semanas else 0, key="semana")
 
-        ejercicios = [r for r in rutinas if r["dia"] == dia_sel]
+    rutinas = [r for r in rutinas_cliente if r["fecha_lunes"] == semana_sel]
 
-        if ejercicios:
-            semana_ciclo = ejercicios[0].get("semana_ciclo", "")
-            if semana_ciclo:
-                st.markdown(f"### {semana_ciclo}")
+    if not rutinas:
+        st.warning("⚠️ No hay rutinas registradas para esta semana.")
+        st.stop()
 
-        ejercicios.sort(key=ordenar_circuito)
+    dias = sorted(set(r["dia"] for r in rutinas), key=lambda x: int(x))
+    dia_sel = st.selectbox("📅 Selecciona el día", dias, key="dia")
+    st.experimental_set_query_params(cliente=cliente_sel, dia=dia_sel)
 
-        st.markdown("### Tabla de ejercicios")
-        peso_presente = any(e.get("peso") for e in ejercicios)
+    ejercicios = [r for r in rutinas if r["dia"] == dia_sel]
 
-        secciones_vistas = set()
-        prev_circuito = None
+    if ejercicios:
+        semana_ciclo = ejercicios[0].get("semana_ciclo", "")
+        if semana_ciclo:
+            st.markdown(f"### {semana_ciclo}")
 
-        for idx, e in enumerate(ejercicios):
-            circuito = e.get("circuito", "Z").upper()
-            seccion = "Warm-up" if circuito in ["A", "B", "C"] else "Workout"
+    ejercicios.sort(key=ordenar_circuito)
 
-            if seccion not in secciones_vistas:
-                st.markdown(f"#### {seccion}")
-                secciones_vistas.add(seccion)
+    st.markdown("### Tabla de ejercicios")
+    peso_presente = any(e.get("peso") for e in ejercicios)
 
-            if prev_circuito and prev_circuito != circuito:
-                st.markdown("<hr style='border: 0; height: 4px; background: #666; margin: 1.2rem 0;'>", unsafe_allow_html=True)
-            prev_circuito = circuito
+    secciones_vistas = set()
+    prev_circuito = None
 
-            col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 3, 1, 1, 1, 1], gap="small")
-            col1.write("")
-            col2.markdown(f"<div style='text-align:center'>{circuito}</div>", unsafe_allow_html=True)
-            col3.markdown(f"<div style='text-align:center'>{e['ejercicio']}</div>", unsafe_allow_html=True)
-            col4.markdown(f"<p style='font-size:16px; color:white; text-align:center'><b>{e.get('series', '')}</b></p>", unsafe_allow_html=True)
-            col5.markdown(f"<p style='font-size:16px; color:white; text-align:center'><b>{e.get('repeticiones', '')}</b></p>", unsafe_allow_html=True)
-            col6.markdown(f"<p style='font-size:16px; color:white; text-align:center'><b>{e.get('peso') if e.get('peso') else ''}</b></p>", unsafe_allow_html=True)
+    for idx, e in enumerate(ejercicios):
+        circuito = e.get("circuito", "Z").upper()
+        seccion = "Warm-up" if circuito in ["A", "B", "C"] else "Workout"
 
-            if col7.button(f"Editar", key=f"editar_{idx}"):
-                st.session_state.ejercicio_idx = idx
+        if seccion not in secciones_vistas:
+            st.markdown(f"#### {seccion}")
+            secciones_vistas.add(seccion)
 
-            if "ejercicio_idx" in st.session_state and st.session_state.ejercicio_idx == idx:
-                num_series = e.get("series") or 0
-                registro_series = e.get("registro_series", [{}]*num_series)
+        if prev_circuito and prev_circuito != circuito:
+            st.markdown("<hr style='border: 0; height: 4px; background: #666; margin: 1.2rem 0;'>", unsafe_allow_html=True)
+        prev_circuito = circuito
 
-                header_cols = st.columns([0.5, 0.5, 0.5])
-                header_cols[0].markdown("<div style='text-align:center; font-weight:bold;'>Serie</div>", unsafe_allow_html=True)
-                header_cols[1].markdown("<div style='text-align:center; font-weight:bold;'>Reps</div>", unsafe_allow_html=True)
-                header_cols[2].markdown("<div style='text-align:center; font-weight:bold;'>Peso (kg)</div>", unsafe_allow_html=True)
+        col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 3, 1, 1, 1, 1], gap="small")
+        col1.write("")
+        col2.markdown(f"<div style='text-align:center'>{circuito}</div>", unsafe_allow_html=True)
+        col3.markdown(f"<div style='text-align:center'>{e['ejercicio']}</div>", unsafe_allow_html=True)
+        col4.markdown(f"<p style='font-size:16px; color:white; text-align:center'><b>{e.get('series', '')}</b></p>", unsafe_allow_html=True)
+        col5.markdown(f"<p style='font-size:16px; color:white; text-align:center'><b>{e.get('repeticiones', '')}</b></p>", unsafe_allow_html=True)
+        col6.markdown(f"<p style='font-size:16px; color:white; text-align:center'><b>{e.get('peso') if e.get('peso') else ''}</b></p>", unsafe_allow_html=True)
 
-                nuevas_series = []
-                for i in range(num_series):
-                    col1, col2, col3 = st.columns([0.4, 0.4, 0.4])
-                    col1.markdown(f"<div style='text-align:center; vertical-align:middle'>{i + 1}</div>", unsafe_allow_html=True)
-                    with col2:
-                        st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
-                        reps_input = st.text_input("Reps", value=registro_series[i].get("reps", ""), key=f"reps_{e['ejercicio']}_{i}", label_visibility="collapsed")
-                        st.markdown("</div>", unsafe_allow_html=True)
-                    with col3:
-                        st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
-                        peso_input = st.text_input("Peso", value=registro_series[i].get("peso", ""), key=f"peso_{e['ejercicio']}_{i}", label_visibility="collapsed")
-                        st.markdown("</div>", unsafe_allow_html=True)
-                    nuevas_series.append({"reps": reps_input, "peso": peso_input})
+        if col7.button(f"Editar", key=f"editar_{idx}"):
+            st.experimental_set_query_params(cliente=cliente_sel, dia=dia_sel, ejercicio_idx=idx)
+            st.session_state.ejercicio_idx = idx
 
-                comentario_input = st.text_input("📝 Comentario", value=e.get("comentario", ""), key=f"coment_{e['ejercicio']}")
+        if ejercicio_idx == idx:
+            num_series = e.get("series") or 0
+            registro_series = e.get("registro_series", [{}]*num_series)
 
-                if e.get("video"):
-                    st.video(e["video"])
+            header_cols = st.columns([0.5, 0.5, 0.5])
+            header_cols[0].markdown("<div style='text-align:center; font-weight:bold;'>Serie</div>", unsafe_allow_html=True)
+            header_cols[1].markdown("<div style='text-align:center; font-weight:bold;'>Reps</div>", unsafe_allow_html=True)
+            header_cols[2].markdown("<div style='text-align:center; font-weight:bold;'>Peso (kg)</div>", unsafe_allow_html=True)
 
-                correo_normalizado = e["correo"].replace("@", "_").replace(".", "_")
-                fecha_normalizada = e["fecha_lunes"].replace("-", "_")
-                doc_id = f"{correo_normalizado}_{fecha_normalizada}_{e['dia']}_{e['circuito']}_{e['ejercicio']}".lower().replace(" ", "_")
-                doc_ref = db.collection("rutinas").document(doc_id)
+            nuevas_series = []
+            for i in range(num_series):
+                col1, col2, col3 = st.columns([0.4, 0.4, 0.4])
+                col1.markdown(f"<div style='text-align:center; vertical-align:middle'>{i + 1}</div>", unsafe_allow_html=True)
+                with col2:
+                    st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
+                    reps_input = st.text_input("Reps", value=registro_series[i].get("reps", ""), key=f"reps_{e['ejercicio']}_{i}", label_visibility="collapsed")
+                    st.markdown("</div>", unsafe_allow_html=True)
+                with col3:
+                    st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
+                    peso_input = st.text_input("Peso", value=registro_series[i].get("peso", ""), key=f"peso_{e['ejercicio']}_{i}", label_visibility="collapsed")
+                    st.markdown("</div>", unsafe_allow_html=True)
+                nuevas_series.append({"reps": reps_input, "peso": peso_input})
 
-                if st.button(f"💾 Guardar cambios - {e['ejercicio']}", key=f"guardar_{e['ejercicio']}"):
-                    try:
-                        doc_ref.update({
-                            "registro_series": nuevas_series,
-                            "comentario": comentario_input
-                        })
-                        st.success("✅ Registro actualizado exitosamente.")
-                    except Exception as error:
-                        st.error("❌ No se pudo guardar. Es posible que el documento no exista con ese ID.")
-                        st.exception(error)
+            comentario_input = st.text_input("📝 Comentario", value=e.get("comentario", ""), key=f"coment_{e['ejercicio']}")
 
+            if e.get("video"):
+                st.video(e["video"])
+
+            correo_normalizado = e["correo"].replace("@", "_").replace(".", "_")
+            fecha_normalizada = e["fecha_lunes"].replace("-", "_")
+            doc_id = f"{correo_normalizado}_{fecha_normalizada}_{e['dia']}_{e['circuito']}_{e['ejercicio']}".lower().replace(" ", "_")
+            doc_ref = db.collection("rutinas").document(doc_id)
+
+            if st.button(f"💾 Guardar cambios - {e['ejercicio']}", key=f"guardar_{e['ejercicio']}"):
+                try:
+                    doc_ref.update({
+                        "registro_series": nuevas_series,
+                        "comentario": comentario_input
+                    })
+                    st.success("✅ Registro actualizado exitosamente.")
+                except Exception as error:
+                    st.error("❌ No se pudo guardar. Es posible que el documento no exista con ese ID.")
+                    st.exception(error)
