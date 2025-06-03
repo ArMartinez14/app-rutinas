@@ -120,7 +120,7 @@ def crear_rutinas():
                 fila["RIR"] = cols[7].text_input("RIR", value=fila["RIR"], key=f"rir_{i}_{idx}")
                 progresiones_docs = db.collection("progresiones").stream()
                 opciones_progresion = [""] + sorted([doc.id for doc in progresiones_docs])
-                fila["Tipo"] = cols[9].text_input("Tipo", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
+                fila["Tipo"] = cols[8].text_input("Tipo", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
 
             # BLOQUE DE PROGRESIÓN PERSONALIZADA - SOLO PARA LA PRIMERA FILA COMO DEMO
             if idx == 0:
@@ -192,7 +192,7 @@ st.markdown("---")
 if st.button("Generar rutina completa"):
     if not nombre_sel or not correo or not entrenador:
         st.warning("Faltan datos obligatorios: nombre, correo o entrenador.")
-
+        return
 
     try:
         for semana in range(int(semanas)):
