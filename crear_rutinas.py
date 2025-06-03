@@ -190,7 +190,7 @@ st.markdown("---")
 if st.button("Generar rutina completa"):
     if not nombre_sel or not correo or not entrenador:
         st.warning("Faltan datos obligatorios: nombre, correo o entrenador.")
-
+        return
 
     try:
         for semana in range(int(semanas)):
