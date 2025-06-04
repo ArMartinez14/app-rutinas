@@ -104,7 +104,14 @@ def crear_rutinas():
                 fila["RIR"] = cols[8].text_input("", value=fila["RIR"], key=f"rir_{i}_{idx}")
                 fila["Tipo"] = cols[9].text_input("", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
 
-                fila["Variable"] = cols[10].selectbox("", ["", "peso", "velocidad", "tiempo", "rir"], index=0 if not fila["Variable"] else ["", "peso", "velocidad", "tiempo", "rir"].index(fila["Variable"]), key=f"var_{i}_{idx}")
+                fila["Variable"] = cols[10].selectbox(
+                    "",
+                    ["", "peso", "velocidad", "tiempo", "rir", "series", "repeticiones"],
+                    index=0 if not fila["Variable"] else ["", "peso", "velocidad", "tiempo", "rir", "series",
+                                                          "repeticiones"].index(fila["Variable"]),
+                    key=f"var_{i}_{idx}"
+                )
+
                 fila["Cantidad"] = cols[11].text_input("", value=fila["Cantidad"], key=f"cant_{i}_{idx}")
                 fila["Operación"] = cols[12].selectbox("", ["", "multiplicacion", "division", "suma", "resta"], index=0 if not fila["Operación"] else ["", "multiplicacion", "division", "suma", "resta"].index(fila["Operación"]), key=f"ope_{i}_{idx}")
                 fila["Semanas"] = cols[13].text_input("", value=fila["Semanas"], key=f"sem_{i}_{idx}")
