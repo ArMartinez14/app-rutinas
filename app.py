@@ -1,6 +1,7 @@
 import streamlit as st
 from ver_rutinas import ver_rutinas
 from crear_rutinas import crear_rutinas
+from evaluaciones import registrar_evaluacion
 
 st.set_page_config(page_title="Motion Center", layout="wide")
 
@@ -16,6 +17,8 @@ if st.sidebar.button("Ver Rutinas"):
     st.session_state.opcion = "Ver Rutinas"
 if st.sidebar.button("Crear Rutinas"):
     st.session_state.opcion = "Crear Rutinas"
+if st.sidebar.button("Evaluaciones"):
+    st.session_state.opcion = "Evaluaciones"
 
 # Mostrar la opción seleccionada o el mensaje de bienvenida
 if st.session_state.opcion:
@@ -23,6 +26,9 @@ if st.session_state.opcion:
         ver_rutinas()
     elif st.session_state.opcion == "Crear Rutinas":
         crear_rutinas()
+    elif st.session_state.opcion == "Evaluaciones":
+        registrar_evaluacion()
+
 else:
     st.markdown("""
         <div style='text-align: center; margin-top: 100px;'>
