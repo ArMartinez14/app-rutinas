@@ -14,12 +14,8 @@ if not firebase_admin._apps:
 db = firestore.client()
 
 # === FUNCION DE PROGRESIÓN ===
-def aplicar_progresion(valor_inicial, semana, incremento, operacion, periodo):
+def aplicar_progresion(valor_inicial, incremento, operacion):
     try:
-        if semana == 0:
-            return valor_inicial
-        if semana % periodo != 0:
-            return valor_inicial
         if operacion == "suma":
             return str(float(valor_inicial) + incremento)
         elif operacion == "resta":
@@ -116,7 +112,43 @@ def crear_rutinas():
     st.markdown("---")
 
     if st.button("Previsualizar rutina"):
-        st.info("Funcionalidad en desarrollo para previsualización con nuevas columnas.")
+        st.subheader("Previsualización de rutina con progresiones")
+        for semana_idx in range(1, int(semanas)+1):
+            with st.expander(f"Semana {semana_idx}"):
+                for i, dia in enumerate(dias):
+                    dia_key = f"rutina_dia_{i+1}"
+                    ejercicios = st.session_state.get(dia_key, [])
+                    st.markdown(f"**{dia}**")
+                    tabla = []
+                    for ejercicio in ejercicios:
+                        ejercicio_mod = ejercicio.copy()
+                        variable = ejercicio.get("Variable", "").strip().lower()
+                        cantidad = ejercicio.get("Cantidad", "")
+                        operacion = ejercicio.get("Operación", "").strip().lower()
+                        semanas_txt = ejercicio.get("Semanas", "")
+                        try:
+                            semanas_aplicar = [int(s.strip()) for s in semanas_txt.split(",") if s.strip().isdigit()]
+                        except:
+                            semanas_aplicar = []
+
+                        if variable and operacion and cantidad and semana_idx in semanas_aplicar:
+                            valor_base = ejercicio.get(variable.capitalize(), "")
+                            if valor_base:
+                                ejercicio_mod[variable.capitalize()] = aplicar_progresion(valor_base, float(cantidad), operacion)
+
+                        tabla.append({
+                            "bloque": ejercicio_mod["Sección"],
+                            "circuito": ejercicio_mod["Circuito"],
+                            "ejercicio": ejercicio_mod["Ejercicio"],
+                            "series": ejercicio_mod["Series"],
+                            "repeticiones": ejercicio_mod["Repeticiones"],
+                            "peso": ejercicio_mod["Peso"],
+                            "tiempo": ejercicio_mod["Tiempo"],
+                            "velocidad": ejercicio_mod["Velocidad"],
+                            "rir": ejercicio_mod["RIR"],
+                            "tipo": ejercicio_mod["Tipo"]
+                        })
+                    st.dataframe(tabla, use_container_width=True)
 
     st.markdown("---")
     if st.button("Generar rutina completa"):
