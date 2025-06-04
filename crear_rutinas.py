@@ -3,6 +3,7 @@ from firebase_admin import credentials, firestore
 import firebase_admin
 from datetime import datetime, timedelta
 import unicodedata
+from guardar_rutina import guardar_rutina
 import json
 
 # === INICIALIZAR FIREBASE ===
@@ -164,4 +165,4 @@ def crear_rutinas():
 
     st.markdown("---")
     if st.button("Generar rutina completa"):
-        st.info("La lógica para guardar con la nueva estructura está lista para conectarse. ¿Deseas que la configuremos?")
+        guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias)
