@@ -1,6 +1,8 @@
 import streamlit as st
 from ver_rutinas import ver_rutinas
 from crear_rutinas import crear_rutinas
+from evaluaciones import registrar_evaluacion
+
 
 def mostrar_menu():
     st.set_page_config(page_title="Motion Center", layout="wide")
