@@ -71,21 +71,24 @@ def registrar_evaluacion():
             st.success(f"✅ Evaluación guardada correctamente para {nombre}.")
 
     # === TAB 2: SALA PESAS ===
-    # === TAB 2: SALA PESAS ===
     with tab2:
         st.subheader("Evaluación en Sala de Pesas")
 
         st.markdown("### Columna")
-        columna_rotacion = st.selectbox("Rotación columna", options=[1, 2, 3, 4], key="columna_rotacion")
-        columna_flexion = st.selectbox("Flexión columna", options=[1, 2, 3, 4], key="columna_flexion")
+        columna_rotacion = st.radio("Rotación columna", options=[1, 2, 3, 4], horizontal=True, key="columna_rotacion")
+        columna_flexion = st.radio("Flexión columna", options=[1, 2, 3, 4], horizontal=True, key="columna_flexion")
 
         st.markdown("### Hombro")
-        hombro_rot_interna = st.selectbox("Rotación Interna hombro", options=[1, 2, 3, 4], key="hombro_rot_interna")
-        hombro_rot_externa = st.selectbox("Rotación Externa hombro", options=[1, 2, 3, 4], key="hombro_rot_externa")
+        hombro_rot_interna = st.radio("Rotación Interna hombro", options=[1, 2, 3, 4], horizontal=True,
+                                      key="hombro_rot_interna")
+        hombro_rot_externa = st.radio("Rotación Externa hombro", options=[1, 2, 3, 4], horizontal=True,
+                                      key="hombro_rot_externa")
 
         st.markdown("### Cadera")
-        cadera_rot_interna = st.selectbox("Rotación Interna cadera", options=[1, 2, 3, 4], key="cadera_rot_interna")
-        cadera_rot_externa = st.selectbox("Rotación Externa cadera", options=[1, 2, 3, 4], key="cadera_rot_externa")
+        cadera_rot_interna = st.radio("Rotación Interna cadera", options=[1, 2, 3, 4], horizontal=True,
+                                      key="cadera_rot_interna")
+        cadera_rot_externa = st.radio("Rotación Externa cadera", options=[1, 2, 3, 4], horizontal=True,
+                                      key="cadera_rot_externa")
 
         if st.button("Guardar evaluación sala de pesas"):
             datos = {
