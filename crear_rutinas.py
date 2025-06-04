@@ -64,6 +64,12 @@ def crear_rutinas():
         "Variable", "Cantidad", "Operación", "Semanas"
     ]
 
+    encabezados = [
+        "Circuito", "Sección", "Ejercicio", "Series", "Repeticiones",
+        "Peso", "Tiempo", "Velocidad", "RIR", "Tipo",
+        "Variable", "Cantidad", "Operación", "Semanas"
+    ]
+
     for i, tab in enumerate(tabs):
         with tab:
             dia_key = f"rutina_dia_{i+1}"
@@ -76,14 +82,18 @@ def crear_rutinas():
                 st.session_state[dia_key].append({k: "" for k in columnas_tabla})
 
             st.markdown("<b>Progresión</b>", unsafe_allow_html=True)
+            header_cols = st.columns(len(encabezados))
+            for col, header in zip(header_cols, encabezados):
+                col.markdown(f"**{header}**")
+
             for idx, fila in enumerate(st.session_state[dia_key]):
                 cols = st.columns(len(columnas_tabla))
 
-                fila["Circuito"] = cols[0].selectbox("Circuito", ["A", "B", "C", "D", "E", "F", "G"],
+                fila["Circuito"] = cols[0].selectbox("", ["A", "B", "C", "D", "E", "F", "G"],
                                                     index=["A", "B", "C", "D", "E", "F", "G"].index(fila["Circuito"]) if fila["Circuito"] else 0,
                                                     key=f"circ_{i}_{idx}")
                 fila["Sección"] = "Warm Up" if fila["Circuito"] in ["A", "B", "C"] else "Work Out"
-                cols[1].markdown(f"**{fila['Sección']}**")
+                cols[1].markdown(f"{fila['Sección']}")
 
                 fila["Ejercicio"] = cols[2].text_input("", value=fila["Ejercicio"], key=f"ej_{i}_{idx}")
                 fila["Series"] = cols[3].text_input("", value=fila["Series"], key=f"ser_{i}_{idx}")
