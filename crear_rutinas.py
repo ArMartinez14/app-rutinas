@@ -4,6 +4,7 @@ import firebase_admin
 from datetime import datetime, timedelta
 import unicodedata
 from guardar_rutina import guardar_rutina
+from utils import aplicar_progresion, normalizar_texto
 import json
 
 # === INICIALIZAR FIREBASE ===
@@ -13,27 +14,6 @@ if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
-
-# === FUNCION DE PROGRESIÓN ===
-def aplicar_progresion(valor_inicial, incremento, operacion):
-    try:
-        if operacion == "suma":
-            return str(float(valor_inicial) + incremento)
-        elif operacion == "resta":
-            return str(float(valor_inicial) - incremento)
-        elif operacion == "multiplicacion":
-            return str(float(valor_inicial) * incremento)
-        elif operacion == "division":
-            return str(float(valor_inicial) / incremento)
-        else:
-            return valor_inicial
-    except:
-        return valor_inicial
-
-# === FUNCION PARA NORMALIZAR TEXTO ===
-def normalizar_texto(texto):
-    return ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
-
 
 def crear_rutinas():
     st.title("Crear nueva rutina")
