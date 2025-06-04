@@ -12,18 +12,19 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
             fecha_str = fecha_semana.strftime("%Y-%m-%d")
             fecha_normalizada = fecha_semana.strftime("%Y_%m_%d")
             correo_normalizado = correo.replace("@", "_").replace(".", "_")
-            nombre_normalizado = normalizar_texto(nombre_sel)
+            nombre_normalizado = normalizar_texto(nombre_sel.title())
 
             for i, dia_nombre in enumerate(dias):
                 dia_key = f"rutina_dia_{i + 1}"
                 ejercicios = st.session_state.get(dia_key, [])
+                numero_dia = str(i + 1)
 
                 for ejercicio in ejercicios:
                     ejercicio_mod = ejercicio.copy()
-                    variable = ejercicio.get("Variable", "").strip().lower()
-                    cantidad = ejercicio.get("Cantidad", "")
-                    operacion = ejercicio.get("Operación", "").strip().lower()
-                    semanas_txt = ejercicio.get("Semanas", "")
+                    variable = ejercicio.get("variable", "").strip().lower()
+                    cantidad = ejercicio.get("cantidad", "")
+                    operacion = ejercicio.get("operación", "").strip().lower()
+                    semanas_txt = ejercicio.get("semanas", "")
 
                     try:
                         semanas_aplicar = [int(s.strip()) for s in semanas_txt.split(",") if s.strip().isdigit()]
@@ -31,32 +32,32 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
                         semanas_aplicar = []
 
                     if variable and operacion and cantidad:
-                        valor_base = ejercicio.get(variable.capitalize(), "")
+                        valor_base = ejercicio.get(variable, "")
                         if valor_base:
                             valor_actual = valor_base
                             for s in range(2, semana + 2):
                                 if s in semanas_aplicar:
                                     valor_actual = aplicar_progresion(valor_actual, float(cantidad), operacion)
-                            ejercicio_mod[variable.capitalize()] = valor_actual
+                            ejercicio_mod[variable] = valor_actual
 
-                    doc_id = f"{correo_normalizado}_{fecha_normalizada}_{dia_nombre}_{ejercicio['Circuito']}_{ejercicio['Ejercicio']}".lower().replace(" ", "_")
+                    doc_id = f"{correo_normalizado}_{fecha_normalizada}_{numero_dia}_{ejercicio['circuito']}_{ejercicio['ejercicio']}".lower().replace(" ", "_")
 
                     data = {
                         "cliente": nombre_normalizado,
                         "correo": correo,
                         "semana": str(semana + 1),
                         "fecha_lunes": fecha_str,
-                        "dia": dia_nombre.split(" ")[-1],
-                        "bloque": ejercicio_mod["Sección"],
-                        "circuito": ejercicio_mod["Circuito"],
-                        "ejercicio": ejercicio_mod["Ejercicio"],
-                        "series": ejercicio_mod["Series"],
-                        "repeticiones": ejercicio_mod["Repeticiones"],
-                        "peso": ejercicio_mod["Peso"],
-                        "tiempo": ejercicio_mod["Tiempo"],
-                        "velocidad": ejercicio_mod["Velocidad"],
-                        "rir": ejercicio_mod["RIR"],
-                        "tipo": ejercicio_mod["Tipo"],
+                        "dia": numero_dia,
+                        "bloque": ejercicio_mod["sección"],
+                        "circuito": ejercicio_mod["circuito"],
+                        "ejercicio": ejercicio_mod["ejercicio"],
+                        "series": ejercicio_mod["series"],
+                        "repeticiones": ejercicio_mod["repeticiones"],
+                        "peso": ejercicio_mod["peso"],
+                        "tiempo": ejercicio_mod["tiempo"],
+                        "velocidad": ejercicio_mod["velocidad"],
+                        "rir": ejercicio_mod["rir"],
+                        "tipo": ejercicio_mod["tipo"],
                         "entrenador": entrenador
                     }
 
