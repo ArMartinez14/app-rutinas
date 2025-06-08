@@ -130,10 +130,11 @@ def crear_rutinas():
                     tabla = []
                     for ejercicio in ejercicios:
                         ejercicio_mod = ejercicio.copy()
+                        # Determinar sección automáticamente
                         circuito = ejercicio.get("Circuito", "")
                         ejercicio_mod["Sección"] = "Warm Up" if circuito in ["A", "B", "C"] else "Work Out"
 
-                        for prog_idx in range(1, 4):
+                        for prog_idx in range(1, 3):  # Progresión 1 y 2
                             variable = ejercicio.get(f"Variable_{prog_idx}", "").strip().lower()
                             cantidad = ejercicio.get(f"Cantidad_{prog_idx}", "")
                             operacion = ejercicio.get(f"Operacion_{prog_idx}", "").strip().lower()
@@ -145,8 +146,7 @@ def crear_rutinas():
                                 semanas_aplicar = []
 
                             if variable and operacion and cantidad:
-                                valor_base = ejercicio_mod.get(variable.capitalize(),
-                                                               ejercicio.get(variable.capitalize(), ""))
+                                valor_base = ejercicio_mod.get(variable.capitalize(), "")
                                 if valor_base:
                                     valor_actual = valor_base
                                     for s in range(2, semana_idx + 1):
