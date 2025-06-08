@@ -37,9 +37,15 @@ def borrar_rutinas():
             return
 
         semanas_ordenadas = sorted(semanas.keys(), reverse=True)
-        semana_sel = st.selectbox("Selecciona la semana que deseas eliminar:", semanas_ordenadas)
 
-        if st.button("Eliminar rutina completa de la semana"):
-            for doc_id in semanas[semana_sel]:
-                db.collection("rutinas").document(doc_id).delete()
-            st.success(f"Rutinas de la semana {semana_sel} eliminadas correctamente.")
+        st.markdown("### Selecciona las semanas que deseas eliminar:")
+        semanas_seleccionadas = []
+        for semana in semanas_ordenadas:
+            if st.checkbox(f"Semana {semana}", key=semana):
+                semanas_seleccionadas.append(semana)
+
+        if semanas_seleccionadas and st.button("🗑️ Eliminar semanas seleccionadas"):
+            for semana in semanas_seleccionadas:
+                for doc_id in semanas[semana]:
+                    db.collection("rutinas").document(doc_id).delete()
+            st.success("Se eliminaron las semanas seleccionadas correctamente.")
