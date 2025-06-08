@@ -70,7 +70,7 @@ def crear_rutinas():
                 fila["Ejercicio"] = cols[1].text_input("", value=fila["Ejercicio"], key=f"ej_{i}_{idx}",
                                                        label_visibility="collapsed", placeholder="Ejercicio")
                 fila["Series"] = cols[2].text_input("", value=fila["Series"], key=f"ser_{i}_{idx}",
-                                                    label_visibility="collapsed", placeholder="Series")
+                                                    label_visibility="collapsed", placeholder="S")
                 fila["Repeticiones"] = cols[3].text_input("", value=fila["Repeticiones"], key=f"rep_{i}_{idx}",
                                                           label_visibility="collapsed", placeholder="Reps")
                 fila["Peso"] = cols[4].text_input("", value=fila["Peso"], key=f"peso_{i}_{idx}",
@@ -143,7 +143,8 @@ def crear_rutinas():
                                 semanas_aplicar = []
 
                             if variable and operacion and cantidad:
-                                valor_base = ejercicio_mod.get(variable.capitalize(), "")
+                                valor_base = ejercicio_mod.get(variable.capitalize(),
+                                                               ejercicio.get(variable.capitalize(), ""))
                                 if valor_base:
                                     valor_actual = valor_base
                                     for s in range(2, semana_idx + 1):
