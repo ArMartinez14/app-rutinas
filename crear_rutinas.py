@@ -70,7 +70,7 @@ def crear_rutinas():
                 fila["Ejercicio"] = cols[1].text_input("", value=fila["Ejercicio"], key=f"ej_{i}_{idx}",
                                                        label_visibility="collapsed", placeholder="Ejercicio")
                 fila["Series"] = cols[2].text_input("", value=fila["Series"], key=f"ser_{i}_{idx}",
-                                                    label_visibility="collapsed", placeholder="S")
+                                                    label_visibility="collapsed", placeholder="Series")
                 fila["Repeticiones"] = cols[3].text_input("", value=fila["Repeticiones"], key=f"rep_{i}_{idx}",
                                                           label_visibility="collapsed", placeholder="Reps")
                 fila["Peso"] = cols[4].text_input("", value=fila["Peso"], key=f"peso_{i}_{idx}",
