@@ -51,7 +51,8 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
                         ejercicio_mod[variable_objetivo] = valor_actual
 
                     # === GUARDAR EN FIRESTORE ===
-                    doc_id = f"{correo_normalizado}_{fecha_normalizada}_{numero_dia}_{ejercicio['circuito']}_{ejercicio['ejercicio']}".lower().replace(" ", "_")
+                    doc_id = f"{correo_normalizado}_{fecha_normalizada}_{numero_dia}_{ejercicio.get('Circuito', ejercicio.get('circuito', ''))}_{ejercicio.get('Ejercicio', ejercicio.get('ejercicio', ''))}".lower().replace(" ", "_")
+
 
                     data = {
                         "cliente": nombre_normalizado,
