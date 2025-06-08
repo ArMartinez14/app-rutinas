@@ -15,6 +15,7 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 
+
 def crear_rutinas():
     st.title("Crear nueva rutina")
 
@@ -44,9 +45,12 @@ def crear_rutinas():
         "Peso", "Tiempo", "Velocidad", "RIR", "Tipo"
     ]
 
+    progresion_activa = st.radio("Progresión activa", ["Progresión 1", "Progresión 2", "Progresión 3"], horizontal=True,
+                                 index=0)
+
     for i, tab in enumerate(tabs):
         with tab:
-            dia_key = f"rutina_dia_{i+1}"
+            dia_key = f"rutina_dia_{i + 1}"
             if dia_key not in st.session_state:
                 st.session_state[dia_key] = [{k: "" for k in columnas_tabla} for _ in range(8)]
 
@@ -56,45 +60,69 @@ def crear_rutinas():
                 st.session_state[dia_key].append({k: "" for k in columnas_tabla})
 
             for idx, fila in enumerate(st.session_state[dia_key]):
-                st.markdown(f"##### Ejercicio {idx+1} - {fila.get('Ejercicio', '')}")
-
-                prog_opciones = ["Progresión 1", "Progresión 2", "Progresión 3"]
-                fila_key_prog = f"progresion_seleccionada_{i}_{idx}"
-                if fila_key_prog not in st.session_state:
-                    st.session_state[fila_key_prog] = prog_opciones[0]
-                fila_prog = st.radio("Progresión activa", prog_opciones, key=fila_key_prog, horizontal=True)
+                st.markdown(f"##### Ejercicio {idx + 1} - {fila.get('Ejercicio', '')}")
 
                 cols = st.columns(13)
                 fila["Circuito"] = cols[0].selectbox("", ["A", "B", "C", "D", "E", "F", "G"],
-                    index=["A", "B", "C", "D", "E", "F", "G"].index(fila["Circuito"]) if fila["Circuito"] else 0,
-                    key=f"circ_{i}_{idx}", label_visibility="collapsed")
-                fila["Ejercicio"] = cols[1].text_input("", value=fila["Ejercicio"], key=f"ej_{i}_{idx}", label_visibility="collapsed", placeholder="Ejercicio")
-                fila["Series"] = cols[2].text_input("", value=fila["Series"], key=f"ser_{i}_{idx}", label_visibility="collapsed", placeholder="S")
-                fila["Repeticiones"] = cols[3].text_input("", value=fila["Repeticiones"], key=f"rep_{i}_{idx}", label_visibility="collapsed", placeholder="Reps")
-                fila["Peso"] = cols[4].text_input("", value=fila["Peso"], key=f"peso_{i}_{idx}", label_visibility="collapsed", placeholder="Kg")
-                fila["Tiempo"] = cols[5].text_input("", value=fila["Tiempo"], key=f"tiempo_{i}_{idx}", label_visibility="collapsed", placeholder="Seg")
-                fila["Velocidad"] = cols[6].text_input("", value=fila["Velocidad"], key=f"vel_{i}_{idx}", label_visibility="collapsed", placeholder="Vel")
-                fila["RIR"] = cols[7].text_input("", value=fila["RIR"], key=f"rir_{i}_{idx}", label_visibility="collapsed", placeholder="RIR")
-                fila["Tipo"] = cols[8].text_input("", value=fila["Tipo"], key=f"tipo_{i}_{idx}", label_visibility="collapsed", placeholder="Tipo")
+                                                     index=["A", "B", "C", "D", "E", "F", "G"].index(
+                                                         fila["Circuito"]) if fila["Circuito"] else 0,
+                                                     key=f"circ_{i}_{idx}", label_visibility="collapsed")
+                fila["Ejercicio"] = cols[1].text_input("", value=fila["Ejercicio"], key=f"ej_{i}_{idx}",
+                                                       label_visibility="collapsed", placeholder="Ejercicio")
+                fila["Series"] = cols[2].text_input("", value=fila["Series"], key=f"ser_{i}_{idx}",
+                                                    label_visibility="collapsed", placeholder="S")
+                fila["Repeticiones"] = cols[3].text_input("", value=fila["Repeticiones"], key=f"rep_{i}_{idx}",
+                                                          label_visibility="collapsed", placeholder="Reps")
+                fila["Peso"] = cols[4].text_input("", value=fila["Peso"], key=f"peso_{i}_{idx}",
+                                                  label_visibility="collapsed", placeholder="Kg")
+                fila["Tiempo"] = cols[5].text_input("", value=fila["Tiempo"], key=f"tiempo_{i}_{idx}",
+                                                    label_visibility="collapsed", placeholder="Seg")
+                fila["Velocidad"] = cols[6].text_input("", value=fila["Velocidad"], key=f"vel_{i}_{idx}",
+                                                       label_visibility="collapsed", placeholder="Vel")
+                fila["RIR"] = cols[7].text_input("", value=fila["RIR"], key=f"rir_{i}_{idx}",
+                                                 label_visibility="collapsed", placeholder="RIR")
+                fila["Tipo"] = cols[8].text_input("", value=fila["Tipo"], key=f"tipo_{i}_{idx}",
+                                                  label_visibility="collapsed", placeholder="Tipo")
 
                 for p in range(1, 4):
-                    if fila_prog == f"Progresión {p}":
-                        fila[f"Variable_{p}"] = cols[9].selectbox("", ["", "peso", "velocidad", "tiempo", "rir", "series", "repeticiones"],
-                            index=0 if not fila.get(f"Variable_{p}") else ["", "peso", "velocidad", "tiempo", "rir", "series", "repeticiones"].index(fila[f"Variable_{p}"]),
-                            key=f"var{p}_{i}_{idx}", label_visibility="collapsed")
-                        fila[f"Cantidad_{p}"] = cols[10].text_input("", value=fila.get(f"Cantidad_{p}", ""), key=f"cant{p}_{i}_{idx}", label_visibility="collapsed", placeholder=f"Cant{p}")
-                        fila[f"Operacion_{p}"] = cols[11].selectbox("", ["", "multiplicacion", "division", "suma", "resta"],
-                            index=0 if not fila.get(f"Operacion_{p}") else ["", "multiplicacion", "division", "suma", "resta"].index(fila[f"Operacion_{p}"]),
-                            key=f"ope{p}_{i}_{idx}", label_visibility="collapsed")
-                        fila[f"Semanas_{p}"] = cols[12].text_input("", value=fila.get(f"Semanas_{p}", ""), key=f"sem{p}_{i}_{idx}", label_visibility="collapsed", placeholder=f"Sem{p}")
+                    if progresion_activa == f"Progresión {p}":
+                        fila[f"Variable_{p}"] = cols[9].selectbox("",
+                                                                  ["", "peso", "velocidad", "tiempo", "rir", "series",
+                                                                   "repeticiones"],
+                                                                  index=0 if not fila.get(f"Variable_{p}") else ["",
+                                                                                                                 "peso",
+                                                                                                                 "velocidad",
+                                                                                                                 "tiempo",
+                                                                                                                 "rir",
+                                                                                                                 "series",
+                                                                                                                 "repeticiones"].index(
+                                                                      fila[f"Variable_{p}"]),
+                                                                  key=f"var{p}_{i}_{idx}", label_visibility="collapsed")
+                        fila[f"Cantidad_{p}"] = cols[10].text_input("", value=fila.get(f"Cantidad_{p}", ""),
+                                                                    key=f"cant{p}_{i}_{idx}",
+                                                                    label_visibility="collapsed",
+                                                                    placeholder=f"Cant{p}")
+                        fila[f"Operacion_{p}"] = cols[11].selectbox("",
+                                                                    ["", "multiplicacion", "division", "suma", "resta"],
+                                                                    index=0 if not fila.get(f"Operacion_{p}") else ["",
+                                                                                                                    "multiplicacion",
+                                                                                                                    "division",
+                                                                                                                    "suma",
+                                                                                                                    "resta"].index(
+                                                                        fila[f"Operacion_{p}"]),
+                                                                    key=f"ope{p}_{i}_{idx}",
+                                                                    label_visibility="collapsed")
+                        fila[f"Semanas_{p}"] = cols[12].text_input("", value=fila.get(f"Semanas_{p}", ""),
+                                                                   key=f"sem{p}_{i}_{idx}",
+                                                                   label_visibility="collapsed", placeholder=f"Sem{p}")
 
     st.markdown("---")
     if st.button("Previsualizar rutina"):
         st.subheader("Previsualización de rutina con progresiones")
-        for semana_idx in range(1, int(semanas)+1):
+        for semana_idx in range(1, int(semanas) + 1):
             with st.expander(f"Semana {semana_idx}"):
                 for i, dia in enumerate(dias):
-                    dia_key = f"rutina_dia_{i+1}"
+                    dia_key = f"rutina_dia_{i + 1}"
                     ejercicios = st.session_state.get(dia_key, [])
                     st.markdown(f"**{dia}**")
                     tabla = []
@@ -109,7 +137,8 @@ def crear_rutinas():
                             operacion = ejercicio.get(f"Operacion_{prog_idx}", "").strip().lower()
                             semanas_txt = ejercicio.get(f"Semanas_{prog_idx}", "")
                             try:
-                                semanas_aplicar = [int(s.strip()) for s in semanas_txt.split(",") if s.strip().isdigit()]
+                                semanas_aplicar = [int(s.strip()) for s in semanas_txt.split(",") if
+                                                   s.strip().isdigit()]
                             except:
                                 semanas_aplicar = []
 
@@ -120,7 +149,8 @@ def crear_rutinas():
                                     for s in range(2, semana_idx + 1):
                                         if s in semanas_aplicar:
                                             try:
-                                                valor_actual = aplicar_progresion(valor_actual, float(cantidad), operacion)
+                                                valor_actual = aplicar_progresion(valor_actual, float(cantidad),
+                                                                                  operacion)
                                             except:
                                                 pass
                                     ejercicio_mod[variable.capitalize()] = valor_actual
