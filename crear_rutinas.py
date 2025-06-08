@@ -93,5 +93,56 @@ def crear_rutinas():
                 fila["Semanas_2"] = cols[15].text_input("", value=fila.get("Semanas_2", ""), key=f"sem2_{i}_{idx}", label_visibility="collapsed", placeholder="Sem2")
 
     st.markdown("---")
+    if st.button("Previsualizar rutina"):
+        st.subheader("Previsualización de rutina con progresiones")
+        for semana_idx in range(1, int(semanas)+1):
+            with st.expander(f"Semana {semana_idx}"):
+                for i, dia in enumerate(dias):
+                    dia_key = f"rutina_dia_{i+1}"
+                    ejercicios = st.session_state.get(dia_key, [])
+                    st.markdown(f"**{dia}**")
+                    tabla = []
+                    for ejercicio in ejercicios:
+                        ejercicio_mod = ejercicio.copy()
+                        circuito = ejercicio.get("Circuito", "")
+                        ejercicio_mod["Sección"] = "Warm Up" if circuito in ["A", "B", "C"] else "Work Out"
+
+                        for prog_idx in range(1, 3):
+                            variable = ejercicio.get(f"Variable_{prog_idx}", "").strip().lower()
+                            cantidad = ejercicio.get(f"Cantidad_{prog_idx}", "")
+                            operacion = ejercicio.get(f"Operacion_{prog_idx}", "").strip().lower()
+                            semanas_txt = ejercicio.get(f"Semanas_{prog_idx}", "")
+                            try:
+                                semanas_aplicar = [int(s.strip()) for s in semanas_txt.split(",") if s.strip().isdigit()]
+                            except:
+                                semanas_aplicar = []
+
+                            if variable and operacion and cantidad:
+                                valor_base = ejercicio_mod.get(variable.capitalize(), "")
+                                if valor_base:
+                                    valor_actual = valor_base
+                                    for s in range(2, semana_idx + 1):
+                                        if s in semanas_aplicar:
+                                            try:
+                                                valor_actual = aplicar_progresion(valor_actual, float(cantidad), operacion)
+                                            except:
+                                                pass
+                                    ejercicio_mod[variable.capitalize()] = valor_actual
+
+                        tabla.append({
+                            "bloque": ejercicio_mod["Sección"],
+                            "circuito": ejercicio_mod["Circuito"],
+                            "ejercicio": ejercicio_mod["Ejercicio"],
+                            "series": ejercicio_mod["Series"],
+                            "repeticiones": ejercicio_mod["Repeticiones"],
+                            "peso": ejercicio_mod["Peso"],
+                            "tiempo": ejercicio_mod["Tiempo"],
+                            "velocidad": ejercicio_mod["Velocidad"],
+                            "rir": ejercicio_mod["RIR"],
+                            "tipo": ejercicio_mod["Tipo"]
+                        })
+                    st.dataframe(tabla, use_container_width=True)
+
+    st.markdown("---")
     if st.button("Generar rutina completa"):
         guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias)
