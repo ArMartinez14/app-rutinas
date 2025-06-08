@@ -26,8 +26,8 @@ def borrar_rutinas():
             doc_id = doc.id
             if doc_id.startswith(correo_normalizado):
                 partes = doc_id.split("_")
-                if len(partes) >= 4:
-                    fecha_semana = f"{partes[1]}_{partes[2]}_{partes[3]}"
+                if len(partes) >= 6:
+                    fecha_semana = f"{partes[3]}_{partes[4]}_{partes[5]}"
                     if fecha_semana not in semanas:
                         semanas[fecha_semana] = []
                     semanas[fecha_semana].append(doc.id)
