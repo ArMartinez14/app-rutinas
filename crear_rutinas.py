@@ -58,8 +58,8 @@ def crear_rutinas():
             for idx, fila in enumerate(st.session_state[dia_key]):
                 st.markdown(f"##### Ejercicio {idx+1} - {fila.get('Ejercicio', '')}")
 
-                # === FILA BASE ===
-                cols = st.columns(10)
+                # === FILA BASE CON PROGRESIONES INCLUIDAS ===
+                cols = st.columns(17)
                 fila["Circuito"] = cols[0].selectbox("", ["A", "B", "C", "D", "E", "F", "G"],
                     index=["A", "B", "C", "D", "E", "F", "G"].index(fila["Circuito"]) if fila["Circuito"] else 0,
                     key=f"circ_{i}_{idx}", label_visibility="collapsed")
@@ -74,31 +74,25 @@ def crear_rutinas():
                 fila["RIR"] = cols[8].text_input("", value=fila["RIR"], key=f"rir_{i}_{idx}", label_visibility="collapsed", placeholder="RIR")
                 fila["Tipo"] = cols[9].text_input("", value=fila["Tipo"], key=f"tipo_{i}_{idx}", label_visibility="collapsed", placeholder="Tipo")
 
-                # === PESTAÑAS DE PROGRESIÓN ===
-                st.markdown("**Progresiones**")
-                prog_tabs = st.tabs(["Progresión 1", "Progresión 2", "Progresión 3"])
-                for p_index, prog_tab in enumerate(prog_tabs, start=1):
-                    with prog_tab:
-                        prog_cols = st.columns([1, 1, 1, 1.5])
-                        key_sufijo = f"_{p_index}"
+                # Progresión 1
+                fila["Variable_1"] = cols[10].selectbox("", ["", "peso", "velocidad", "tiempo", "rir", "series", "repeticiones"],
+                    index=0 if not fila.get("Variable_1") else ["", "peso", "velocidad", "tiempo", "rir", "series", "repeticiones"].index(fila["Variable_1"]),
+                    key=f"var1_{i}_{idx}", label_visibility="collapsed")
+                fila["Cantidad_1"] = cols[11].text_input("", value=fila.get("Cantidad_1", ""), key=f"cant1_{i}_{idx}", label_visibility="collapsed", placeholder="Cant1")
+                fila["Operacion_1"] = cols[12].selectbox("", ["", "multiplicacion", "division", "suma", "resta"],
+                    index=0 if not fila.get("Operacion_1") else ["", "multiplicacion", "division", "suma", "resta"].index(fila["Operacion_1"]),
+                    key=f"ope1_{i}_{idx}", label_visibility="collapsed")
+                fila["Semanas_1"] = cols[13].text_input("", value=fila.get("Semanas_1", ""), key=f"sem1_{i}_{idx}", label_visibility="collapsed", placeholder="Sem1")
 
-                        variable_key = f"Variable{key_sufijo}"
-                        cantidad_key = f"Cantidad{key_sufijo}"
-                        operacion_key = f"Operacion{key_sufijo}"
-                        semanas_key = f"Semanas{key_sufijo}"
-
-                        fila[variable_key] = prog_cols[0].selectbox(
-                            "Variable", ["", "peso", "velocidad", "tiempo", "rir", "series", "repeticiones"],
-                            index=0 if not fila.get(variable_key) else ["", "peso", "velocidad", "tiempo", "rir", "series", "repeticiones"].index(fila[variable_key]),
-                            key=f"var_{i}_{idx}_{p_index}", label_visibility="collapsed"
-                        )
-                        fila[cantidad_key] = prog_cols[1].text_input("", value=fila.get(cantidad_key, ""), key=f"cant_{i}_{idx}_{p_index}", label_visibility="collapsed", placeholder="Cant.")
-                        fila[operacion_key] = prog_cols[2].selectbox(
-                            "", ["", "multiplicacion", "division", "suma", "resta"],
-                            index=0 if not fila.get(operacion_key) else ["", "multiplicacion", "division", "suma", "resta"].index(fila[operacion_key]),
-                            key=f"ope_{i}_{idx}_{p_index}", label_visibility="collapsed"
-                        )
-                        fila[semanas_key] = prog_cols[3].text_input("", value=fila.get(semanas_key, ""), key=f"sem_{i}_{idx}_{p_index}", label_visibility="collapsed", placeholder="Semanas")
+                # Progresión 2
+                fila["Variable_2"] = cols[14].selectbox("", ["", "peso", "velocidad", "tiempo", "rir", "series", "repeticiones"],
+                    index=0 if not fila.get("Variable_2") else ["", "peso", "velocidad", "tiempo", "rir", "series", "repeticiones"].index(fila["Variable_2"]),
+                    key=f"var2_{i}_{idx}", label_visibility="collapsed")
+                fila["Cantidad_2"] = cols[15].text_input("", value=fila.get("Cantidad_2", ""), key=f"cant2_{i}_{idx}", label_visibility="collapsed", placeholder="Cant2")
+                fila["Operacion_2"] = cols[16].selectbox("", ["", "multiplicacion", "division", "suma", "resta"],
+                    index=0 if not fila.get("Operacion_2") else ["", "multiplicacion", "division", "suma", "resta"].index(fila["Operacion_2"]),
+                    key=f"ope2_{i}_{idx}", label_visibility="collapsed")
+                fila["Semanas_2"] = cols[16].text_input("", value=fila.get("Semanas_2", ""), key=f"sem2_{i}_{idx}", label_visibility="collapsed", placeholder="Sem2")
 
     st.markdown("---")
     if st.button("Generar rutina completa"):
