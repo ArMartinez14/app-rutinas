@@ -22,32 +22,35 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
                 for ejercicio in ejercicios:
                     ejercicio_mod = ejercicio.copy()
 
-                    # Buscar progresiones múltiples: progresion_1_variable, progresion_2_variable, etc.
-                    for n in range(1, 6):  # Permitimos hasta 5 progresiones por ejercicio
-                        variable_key = f"progresion_{n}_variable"
-                        cantidad_key = f"progresion_{n}_cantidad"
-                        operacion_key = f"progresion_{n}_operacion"
-                        semanas_key = f"progresion_{n}_semanas"
+                    # Aplicar progresiones múltiples (1 a 5)
+                    for variable_objetivo in ["peso", "repeticiones", "rir", "tiempo", "velocidad"]:
+                        valor_original = ejercicio.get(variable_objetivo, "")
+                        if not valor_original:
+                            continue  # ignorar si no hay valor
 
-                        variable = ejercicio.get(variable_key, "").strip().lower()
-                        cantidad = ejercicio.get(cantidad_key, "")
-                        operacion = ejercicio.get(operacion_key, "").strip().lower()
-                        semanas_txt = ejercicio.get(semanas_key, "")
+                        valor_actual = valor_original
 
-                        try:
-                            semanas_aplicar = [int(s.strip()) for s in semanas_txt.split(",") if s.strip().isdigit()]
-                        except:
-                            semanas_aplicar = []
+                        for n in range(1, 6):
+                            var = ejercicio.get(f"progresion_{n}_variable", "").strip().lower()
+                            cantidad = ejercicio.get(f"progresion_{n}_cantidad", "")
+                            operacion = ejercicio.get(f"progresion_{n}_operacion", "").strip().lower()
+                            semanas_txt = ejercicio.get(f"progresion_{n}_semanas", "")
 
-                        if variable and operacion and cantidad:
-                            valor_base = ejercicio_mod.get(variable, "")
-                            if valor_base:
-                                valor_actual = valor_base
-                                for s in range(2, semana + 2):
-                                    if s in semanas_aplicar:
-                                        valor_actual = aplicar_progresion(valor_actual, float(cantidad), operacion)
-                                ejercicio_mod[variable] = valor_actual
+                            if var != variable_objetivo or not cantidad or not operacion:
+                                continue
 
+                            try:
+                                semanas_aplicar = [int(s.strip()) for s in semanas_txt.split(",") if s.strip().isdigit()]
+                            except:
+                                semanas_aplicar = []
+
+                            for s in range(2, semana + 2):  # semana + 1 es semana actual (indexada desde 0)
+                                if s in semanas_aplicar:
+                                    valor_actual = aplicar_progresion(valor_actual, float(cantidad), operacion)
+
+                        ejercicio_mod[variable_objetivo] = valor_actual
+
+                    # === GUARDAR EN FIRESTORE ===
                     doc_id = f"{correo_normalizado}_{fecha_normalizada}_{numero_dia}_{ejercicio['circuito']}_{ejercicio['ejercicio']}".lower().replace(" ", "_")
 
                     data = {
@@ -56,16 +59,16 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
                         "semana": str(semana + 1),
                         "fecha_lunes": fecha_str,
                         "dia": numero_dia,
-                        "bloque": ejercicio_mod["sección"],
-                        "circuito": ejercicio_mod["circuito"],
-                        "ejercicio": ejercicio_mod["ejercicio"],
-                        "series": ejercicio_mod["series"],
-                        "repeticiones": ejercicio_mod["repeticiones"],
-                        "peso": ejercicio_mod["peso"],
-                        "tiempo": ejercicio_mod["tiempo"],
-                        "velocidad": ejercicio_mod["velocidad"],
-                        "rir": ejercicio_mod["rir"],
-                        "tipo": ejercicio_mod["tipo"],
+                        "bloque": ejercicio_mod.get("sección", ""),
+                        "circuito": ejercicio_mod.get("circuito", ""),
+                        "ejercicio": ejercicio_mod.get("ejercicio", ""),
+                        "series": ejercicio_mod.get("series", ""),
+                        "repeticiones": ejercicio_mod.get("repeticiones", ""),
+                        "peso": ejercicio_mod.get("peso", ""),
+                        "tiempo": ejercicio_mod.get("tiempo", ""),
+                        "velocidad": ejercicio_mod.get("velocidad", ""),
+                        "rir": ejercicio_mod.get("rir", ""),
+                        "tipo": ejercicio_mod.get("tipo", ""),
                         "entrenador": entrenador
                     }
 
