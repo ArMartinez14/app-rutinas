@@ -3,6 +3,7 @@ from firebase_admin import credentials, firestore
 import firebase_admin
 import json
 
+# === INICIALIZAR FIREBASE ===
 if not firebase_admin._apps:
     cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
     cred = credentials.Certificate(cred_dict)
@@ -10,9 +11,8 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 
-
 def borrar_rutinas():
-    st.title("🗑️ Borrar Rutinas de un Cliente")
+    st.title("🗑️ Borrar Rutinas por Semana")
 
     correo_input = st.text_input("Ingresa el correo del cliente:")
 
@@ -20,29 +20,26 @@ def borrar_rutinas():
         correo_normalizado = correo_input.replace("@", "_").replace(".", "_").lower()
 
         docs = db.collection("rutinas").stream()
-        rutinas = []
+        semanas = {}
+
         for doc in docs:
-            if doc.id.startswith(correo_normalizado):
-                data = doc.to_dict()
-                rutinas.append({
-                    "id": doc.id,
-                    "cliente": data.get("cliente", ""),
-                    "fecha": data.get("fecha", ""),
-                    "dia": data.get("dia", ""),
-                    "ejercicio": data.get("ejercicio", ""),
-                    "circuito": data.get("circuito", ""),
-                })
+            doc_id = doc.id
+            if doc_id.startswith(correo_normalizado):
+                partes = doc_id.split("_")
+                if len(partes) >= 4:
+                    fecha_semana = f"{partes[1]}_{partes[2]}_{partes[3]}"
+                    if fecha_semana not in semanas:
+                        semanas[fecha_semana] = []
+                    semanas[fecha_semana].append(doc.id)
 
-        if rutinas:
-            etiquetas = [
-                f"{r['fecha']} | Día {r['dia']} | {r['circuito']} - {r['ejercicio']}" for r in rutinas
-            ]
-            seleccionadas = st.multiselect("Selecciona las rutinas a eliminar:", etiquetas)
-
-            if st.button("Eliminar seleccionadas"):
-                for r, etiqueta in zip(rutinas, etiquetas):
-                    if etiqueta in seleccionadas:
-                        db.collection("rutinas").document(r["id"]).delete()
-                st.success("Rutinas eliminadas correctamente.")
-        else:
+        if not semanas:
             st.warning("No se encontraron rutinas para ese correo.")
+            return
+
+        semanas_ordenadas = sorted(semanas.keys(), reverse=True)
+        semana_sel = st.selectbox("Selecciona la semana que deseas eliminar:", semanas_ordenadas)
+
+        if st.button("Eliminar rutina completa de la semana"):
+            for doc_id in semanas[semana_sel]:
+                db.collection("rutinas").document(doc_id).delete()
+            st.success(f"Rutinas de la semana {semana_sel} eliminadas correctamente.")
