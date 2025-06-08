@@ -49,7 +49,7 @@ def crear_rutinas():
                                  index=0)
 
     for i, tab in enumerate(tabs):
-        with (tab):
+        with tab:
             dia_key = f"rutina_dia_{i + 1}"
             if dia_key not in st.session_state:
                 st.session_state[dia_key] = [{k: "" for k in columnas_tabla} for _ in range(8)]
