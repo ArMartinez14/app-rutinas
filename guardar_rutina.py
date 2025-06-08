@@ -21,24 +21,32 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
 
                 for ejercicio in ejercicios:
                     ejercicio_mod = ejercicio.copy()
-                    variable = ejercicio.get("variable", "").strip().lower()
-                    cantidad = ejercicio.get("cantidad", "")
-                    operacion = ejercicio.get("operación", "").strip().lower()
-                    semanas_txt = ejercicio.get("semanas", "")
 
-                    try:
-                        semanas_aplicar = [int(s.strip()) for s in semanas_txt.split(",") if s.strip().isdigit()]
-                    except:
-                        semanas_aplicar = []
+                    # Buscar progresiones múltiples: progresion_1_variable, progresion_2_variable, etc.
+                    for n in range(1, 6):  # Permitimos hasta 5 progresiones por ejercicio
+                        variable_key = f"progresion_{n}_variable"
+                        cantidad_key = f"progresion_{n}_cantidad"
+                        operacion_key = f"progresion_{n}_operacion"
+                        semanas_key = f"progresion_{n}_semanas"
 
-                    if variable and operacion and cantidad:
-                        valor_base = ejercicio.get(variable, "")
-                        if valor_base:
-                            valor_actual = valor_base
-                            for s in range(2, semana + 2):
-                                if s in semanas_aplicar:
-                                    valor_actual = aplicar_progresion(valor_actual, float(cantidad), operacion)
-                            ejercicio_mod[variable] = valor_actual
+                        variable = ejercicio.get(variable_key, "").strip().lower()
+                        cantidad = ejercicio.get(cantidad_key, "")
+                        operacion = ejercicio.get(operacion_key, "").strip().lower()
+                        semanas_txt = ejercicio.get(semanas_key, "")
+
+                        try:
+                            semanas_aplicar = [int(s.strip()) for s in semanas_txt.split(",") if s.strip().isdigit()]
+                        except:
+                            semanas_aplicar = []
+
+                        if variable and operacion and cantidad:
+                            valor_base = ejercicio_mod.get(variable, "")
+                            if valor_base:
+                                valor_actual = valor_base
+                                for s in range(2, semana + 2):
+                                    if s in semanas_aplicar:
+                                        valor_actual = aplicar_progresion(valor_actual, float(cantidad), operacion)
+                                ejercicio_mod[variable] = valor_actual
 
                     doc_id = f"{correo_normalizado}_{fecha_normalizada}_{numero_dia}_{ejercicio['circuito']}_{ejercicio['ejercicio']}".lower().replace(" ", "_")
 

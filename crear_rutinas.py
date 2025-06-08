@@ -68,14 +68,13 @@ def crear_rutinas():
                 col.markdown(f"**{header}**")
 
             for idx, fila in enumerate(st.session_state[dia_key]):
-                cols = st.columns(len(columnas_tabla))
-
+                cols = st.columns(10)
                 fila["Circuito"] = cols[0].selectbox("", ["A", "B", "C", "D", "E", "F", "G"],
-                                                    index=["A", "B", "C", "D", "E", "F", "G"].index(fila["Circuito"]) if fila["Circuito"] else 0,
-                                                    key=f"circ_{i}_{idx}")
+                                                     index=["A", "B", "C", "D", "E", "F", "G"].index(
+                                                         fila["Circuito"]) if fila["Circuito"] else 0,
+                                                     key=f"circ_{i}_{idx}")
                 fila["Sección"] = "Warm Up" if fila["Circuito"] in ["A", "B", "C"] else "Work Out"
                 cols[1].markdown(f"{fila['Sección']}")
-
                 fila["Ejercicio"] = cols[2].text_input("", value=fila["Ejercicio"], key=f"ej_{i}_{idx}")
                 fila["Series"] = cols[3].text_input("", value=fila["Series"], key=f"ser_{i}_{idx}")
                 fila["Repeticiones"] = cols[4].text_input("", value=fila["Repeticiones"], key=f"rep_{i}_{idx}")
@@ -85,49 +84,77 @@ def crear_rutinas():
                 fila["RIR"] = cols[8].text_input("", value=fila["RIR"], key=f"rir_{i}_{idx}")
                 fila["Tipo"] = cols[9].text_input("", value=fila["Tipo"], key=f"tipo_{i}_{idx}")
 
-                fila["Variable"] = cols[10].selectbox(
-                    "",
-                    ["", "peso", "velocidad", "tiempo", "rir", "series", "repeticiones"],
-                    index=0 if not fila["Variable"] else ["", "peso", "velocidad", "tiempo", "rir", "series",
-                                                          "repeticiones"].index(fila["Variable"]),
-                    key=f"var_{i}_{idx}"
-                )
+                # === PESTAÑAS DE PROGRESIÓN ===
+                st.markdown("**Progresiones**")
+                prog_tabs = st.tabs(["Progresión 1", "Progresión 2", "Progresión 3"])
+                for p_index, prog_tab in enumerate(prog_tabs, start=1):
+                    with prog_tab:
+                        col1, col2, col3, col4 = st.columns(4)
+                        key_sufijo = f"_{p_index}"
 
-                fila["Cantidad"] = cols[11].text_input("", value=fila["Cantidad"], key=f"cant_{i}_{idx}")
-                fila["Operación"] = cols[12].selectbox("", ["", "multiplicacion", "division", "suma", "resta"], index=0 if not fila["Operación"] else ["", "multiplicacion", "division", "suma", "resta"].index(fila["Operación"]), key=f"ope_{i}_{idx}")
-                fila["Semanas"] = cols[13].text_input("", value=fila["Semanas"], key=f"sem_{i}_{idx}")
+                        variable_key = f"Variable{key_sufijo}"
+                        cantidad_key = f"Cantidad{key_sufijo}"
+                        operacion_key = f"Operacion{key_sufijo}"
+                        semanas_key = f"Semanas{key_sufijo}"
+
+                        fila[variable_key] = col1.selectbox(
+                            "Variable",
+                            ["", "peso", "velocidad", "tiempo", "rir", "series", "repeticiones"],
+                            index=0 if not fila.get(variable_key) else ["", "peso", "velocidad", "tiempo", "rir",
+                                                                        "series", "repeticiones"].index(
+                                fila[variable_key]),
+                            key=f"var_{i}_{idx}_{p_index}"
+                        )
+                        fila[cantidad_key] = col2.text_input("Cantidad", value=fila.get(cantidad_key, ""),
+                                                             key=f"cant_{i}_{idx}_{p_index}")
+                        fila[operacion_key] = col3.selectbox("Operación",
+                                                             ["", "multiplicacion", "division", "suma", "resta"],
+                                                             index=0 if not fila.get(operacion_key) else ["",
+                                                                                                          "multiplicacion",
+                                                                                                          "division",
+                                                                                                          "suma",
+                                                                                                          "resta"].index(
+                                                                 fila[operacion_key]), key=f"ope_{i}_{idx}_{p_index}")
+                        fila[semanas_key] = col4.text_input("Semanas", value=fila.get(semanas_key, ""),
+                                                            key=f"sem_{i}_{idx}_{p_index}")
 
     st.markdown("---")
 
     if st.button("Previsualizar rutina"):
         st.subheader("Previsualización de rutina con progresiones")
-        for semana_idx in range(1, int(semanas)+1):
+        for semana_idx in range(1, int(semanas) + 1):
             with st.expander(f"Semana {semana_idx}"):
                 for i, dia in enumerate(dias):
-                    dia_key = f"rutina_dia_{i+1}"
+                    dia_key = f"rutina_dia_{i + 1}"
                     ejercicios = st.session_state.get(dia_key, [])
                     st.markdown(f"**{dia}**")
                     tabla = []
                     for ejercicio in ejercicios:
                         ejercicio_mod = ejercicio.copy()
-                        variable = ejercicio.get("Variable", "").strip().lower()
-                        cantidad = ejercicio.get("Cantidad", "")
-                        operacion = ejercicio.get("Operación", "").strip().lower()
-                        semanas_txt = ejercicio.get("Semanas", "")
-                        try:
-                            semanas_aplicar = [int(s.strip()) for s in semanas_txt.split(",") if s.strip().isdigit()]
-                        except:
-                            semanas_aplicar = []
 
-                        # Aplicar progresión acumulativa
-                        if variable and operacion and cantidad:
-                            valor_base = ejercicio.get(variable.capitalize(), "")
-                            if valor_base:
-                                valor_actual = valor_base
-                                for s in range(2, semana_idx + 1):
-                                    if s in semanas_aplicar:
-                                        valor_actual = aplicar_progresion(valor_actual, float(cantidad), operacion)
-                                ejercicio_mod[variable.capitalize()] = valor_actual
+                        for prog_idx in range(1, 4):  # Progresión 1 a 3
+                            variable = ejercicio.get(f"Variable_{prog_idx}", "").strip().lower()
+                            cantidad = ejercicio.get(f"Cantidad_{prog_idx}", "")
+                            operacion = ejercicio.get(f"Operacion_{prog_idx}", "").strip().lower()
+                            semanas_txt = ejercicio.get(f"Semanas_{prog_idx}", "")
+                            try:
+                                semanas_aplicar = [int(s.strip()) for s in semanas_txt.split(",") if
+                                                   s.strip().isdigit()]
+                            except:
+                                semanas_aplicar = []
+
+                            if variable and operacion and cantidad:
+                                valor_base = ejercicio_mod.get(variable.capitalize(), "")
+                                if valor_base:
+                                    valor_actual = valor_base
+                                    for s in range(2, semana_idx + 1):
+                                        if s in semanas_aplicar:
+                                            try:
+                                                valor_actual = aplicar_progresion(valor_actual, float(cantidad),
+                                                                                  operacion)
+                                            except:
+                                                pass
+                                    ejercicio_mod[variable.capitalize()] = valor_actual
 
                         tabla.append({
                             "bloque": ejercicio_mod["Sección"],
