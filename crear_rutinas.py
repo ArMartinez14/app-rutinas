@@ -41,7 +41,7 @@ def crear_rutinas():
     tabs = st.tabs(dias)
 
     columnas_tabla = [
-        "Circuito", "Ejercicio", "Series", "Repeticiones",
+        "Circuito", "Sección", "Ejercicio", "Series", "Repeticiones",
         "Peso", "Tiempo", "Velocidad", "RIR", "Tipo"
     ]
 
@@ -49,7 +49,7 @@ def crear_rutinas():
                                  index=0)
 
     for i, tab in enumerate(tabs):
-        with tab:
+        with (tab):
             dia_key = f"rutina_dia_{i + 1}"
             if dia_key not in st.session_state:
                 st.session_state[dia_key] = [{k: "" for k in columnas_tabla} for _ in range(8)]
@@ -62,27 +62,29 @@ def crear_rutinas():
             for idx, fila in enumerate(st.session_state[dia_key]):
                 st.markdown(f"##### Ejercicio {idx + 1} - {fila.get('Ejercicio', '')}")
 
-                cols = st.columns(13)
+                cols = st.columns(14)
                 fila["Circuito"] = cols[0].selectbox("", ["A", "B", "C", "D", "E", "F", "G"],
                                                      index=["A", "B", "C", "D", "E", "F", "G"].index(
                                                          fila["Circuito"]) if fila["Circuito"] else 0,
                                                      key=f"circ_{i}_{idx}", label_visibility="collapsed")
-                fila["Ejercicio"] = cols[1].text_input("", value=fila["Ejercicio"], key=f"ej_{i}_{idx}",
+                fila["Sección"] = "Warm Up" if fila["Circuito"] in ["A", "B", "C"] else "Work Out"
+                cols[1].text(fila["Sección"])
+                fila["Ejercicio"] = cols[2].text_input("", value=fila["Ejercicio"], key=f"ej_{i}_{idx}",
                                                        label_visibility="collapsed", placeholder="Ejercicio")
-                fila["Series"] = cols[2].text_input("", value=fila["Series"], key=f"ser_{i}_{idx}",
+                fila["Series"] = cols[3].text_input("", value=fila["Series"], key=f"ser_{i}_{idx}",
                                                     label_visibility="collapsed", placeholder="S")
-                fila["Repeticiones"] = cols[3].text_input("", value=fila["Repeticiones"], key=f"rep_{i}_{idx}",
+                fila["Repeticiones"] = cols[4].text_input("", value=fila["Repeticiones"], key=f"rep_{i}_{idx}",
                                                           label_visibility="collapsed", placeholder="Reps")
-                fila["Peso"] = cols[4].text_input("", value=fila["Peso"], key=f"peso_{i}_{idx}",
+                fila["Peso"] = cols[5].text_input("", value=fila["Peso"], key=f"peso_{i}_{idx}",
                                                   label_visibility="collapsed", placeholder="Kg")
-                fila["Tiempo"] = cols[5].text_input("", value=fila["Tiempo"], key=f"tiempo_{i}_{idx}",
+                fila["Tiempo"] = cols[6].text_input("", value=fila["Tiempo"], key=f"tiempo_{i}_{idx}",
                                                     label_visibility="collapsed", placeholder="Seg")
-                fila["Velocidad"] = cols[6].text_input("", value=fila["Velocidad"], key=f"vel_{i}_{idx}",
+                fila["Velocidad"] = cols[7].text_input("", value=fila["Velocidad"], key=f"vel_{i}_{idx}",
                                                        label_visibility="collapsed", placeholder="Vel")
-                fila["RIR"] = cols[7].text_input("", value=fila["RIR"], key=f"rir_{i}_{idx}",
+                fila["RIR"] = cols[8].text_input("", value=fila["RIR"], key=f"rir_{i}_{idx}",
                                                  label_visibility="collapsed", placeholder="RIR")
-                fila["Tipo"] = cols[8].text_input("", value=fila["Tipo"], key=f"tipo_{i}_{idx}",
-                                                  label_visibility="collapsed", placeholder="Tipo")
+                fila["Tipo"] = cols[13].text_input("", value=fila["Tipo"], key=f"tipo_{i}_{idx}",
+                                                   label_visibility="collapsed", placeholder="Tipo")
 
                 for p in range(1, 4):
                     if progresion_activa == f"Progresión {p}":
