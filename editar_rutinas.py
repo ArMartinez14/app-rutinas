@@ -24,6 +24,7 @@ def editar_rutinas():
     # === Buscar semanas disponibles para ese cliente ===
     docs = db.collection("rutinas").stream()
     semanas = set()
+    ejercicios_por_dia = {}
 
     for doc in docs:
         doc_id = doc.id
@@ -39,7 +40,19 @@ def editar_rutinas():
     if not semana_sel:
         return
 
-    st.markdown("### 📝 Editar ejercicios de la semana")
+    # === Agrupar ejercicios por día ===
+    for doc in db.collection("rutinas").stream():
+        if semana_sel in doc.id and doc.id.startswith(correo_normalizado):
+            data = doc.to_dict()
+            dia = data.get("dia", "")
+            if dia not in ejercicios_por_dia:
+                ejercicios_por_dia[dia] = []
+            ejercicios_por_dia[dia].append((doc.id, data))
+
+    dias_disponibles = sorted(ejercicios_por_dia.keys(), key=lambda x: int(x))
+    dia_sel = st.selectbox("Selecciona el día a editar:", dias_disponibles, format_func=lambda x: f"Día {x}")
+
+    st.markdown(f"### 📝 Editar ejercicios del Día {dia_sel}")
 
     # Encabezado
     cols = st.columns([3, 1, 2, 2, 1])
@@ -51,26 +64,22 @@ def editar_rutinas():
 
     ejercicios_editables = []
 
-    for doc in db.collection("rutinas").stream():
-        if semana_sel in doc.id and doc.id.startswith(correo_normalizado):
-            data = doc.to_dict()
+    for doc_id, data in ejercicios_por_dia[dia_sel]:
+        col1, col2, col3, col4, col5 = st.columns([3, 1, 2, 2, 1])
+        ejercicio_editado = {
+            "doc_id": doc_id,
+            "original": data.get("ejercicio", ""),
+            "dia": data.get("dia", ""),
+            "circuito": data.get("circuito", ""),
+            "ejercicio": col1.text_input("", value=data.get("ejercicio", ""), key=doc_id + "_ejercicio"),
+            "series": col2.number_input("", value=int(data.get("series", 0)), key=doc_id + "_series"),
+            "reps": col3.text_input("", value=data.get("reps", ""), key=doc_id + "_reps"),
+            "peso": col4.text_input("", value=data.get("peso", ""), key=doc_id + "_peso"),
+            "rir": col5.text_input("", value=data.get("rir", ""), key=doc_id + "_rir")
+        }
+        ejercicios_editables.append(ejercicio_editado)
 
-            col1, col2, col3, col4, col5 = st.columns([3, 1, 2, 2, 1])
-            ejercicio_editado = {
-                "doc_id": doc.id,
-                "original": data.get("ejercicio", ""),
-                "dia": data.get("dia", ""),
-                "circuito": data.get("circuito", ""),
-                "ejercicio": col1.text_input("", value=data.get("ejercicio", ""), key=doc.id + "_ejercicio"),
-                "series": col2.number_input("", value=int(data.get("series", 0)), key=doc.id + "_series"),
-                "reps": col3.text_input("", value=data.get("reps", ""), key=doc.id + "_reps"),
-                "peso": col4.text_input("", value=data.get("peso", ""), key=doc.id + "_peso"),
-                "rir": col5.text_input("", value=data.get("rir", ""), key=doc.id + "_rir")
-            }
-
-            ejercicios_editables.append(ejercicio_editado)
-
-    if st.button("✅ Aplicar cambios a esta y futuras semanas"):
+    if st.button("✅ Aplicar cambios a este día y futuras semanas"):
         fecha_sel = datetime.strptime(semana_sel, "%Y_%m_%d")
         total_actualizados = 0
 
