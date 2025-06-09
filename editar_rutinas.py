@@ -85,11 +85,20 @@ def editar_rutinas():
 
         for cambio in ejercicios_editables:
             nombre_original = cambio["original"]
+            dia_original = cambio["dia"]
+            circuito_original = cambio["circuito"]
+
             for doc in db.collection("rutinas").stream():
-                if doc.id.startswith(correo_normalizado) and nombre_original in doc.id:
-                    partes = doc.id.split("_")
-                    if len(partes) >= 6:
-                        fecha_doc = datetime.strptime(f"{partes[3]}_{partes[4]}_{partes[5]}", "%Y_%m_%d")
+                data = doc.to_dict()
+                if (
+                        data.get("correo", "").replace("@", "_").replace(".", "_").lower() == correo_normalizado and
+                        data.get("ejercicio", "") == nombre_original and
+                        data.get("dia", "") == dia_original and
+                        data.get("circuito", "") == circuito_original
+                ):
+                    fecha_doc_str = data.get("fecha_lunes", "")
+                    try:
+                        fecha_doc = datetime.strptime(fecha_doc_str, "%Y-%m-%d")
                         if fecha_doc >= fecha_sel:
                             db.collection("rutinas").document(doc.id).update({
                                 "ejercicio": cambio["ejercicio"],
@@ -99,5 +108,7 @@ def editar_rutinas():
                                 "rir": cambio["rir"]
                             })
                             total_actualizados += 1
+                    except:
+                        pass
 
         st.success(f"Cambios aplicados correctamente a {total_actualizados} ejercicios.")
