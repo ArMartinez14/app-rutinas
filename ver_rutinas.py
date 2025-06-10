@@ -6,6 +6,7 @@ def ver_rutinas():
     import json
     import os
     import re
+    from utils import actualizar_progresiones_individual
 
     if not firebase_admin._apps:
         cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
