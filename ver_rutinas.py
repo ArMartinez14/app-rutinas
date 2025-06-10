@@ -5,6 +5,7 @@ def ver_rutinas():
     from datetime import datetime, timedelta
     import json
     import os
+    import re
 
     if not firebase_admin._apps:
         cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
@@ -139,7 +140,9 @@ def ver_rutinas():
         col5.markdown(f"<p style='font-size:16px; color:white; text-align:center'><b>{e.get('repeticiones', '')}</b></p>", unsafe_allow_html=True)
         col6.markdown(f"<p style='font-size:16px; color:white; text-align:center'><b>{e.get('peso') if e.get('peso') else ''}</b></p>", unsafe_allow_html=True)
 
-        if col7.button(f"Editar", key=f"editar_{idx}"):
+        ejercicio_key = re.sub(r'\W+', '_', e['ejercicio'].lower())
+
+        if col7.button(f"Editar", key=f"editar_{ejercicio_key}_{idx}"):
             st.session_state.ejercicio_idx = idx
 
         if st.session_state.get("ejercicio_idx") == idx:
@@ -149,19 +152,19 @@ def ver_rutinas():
                 peso_alcanzado = st.text_input(
                     "🏋️ Peso Alcanzado (kg)",
                     value=e.get("peso_alcanzado", ""),
-                    key=f"peso_alcanzado_{idx}"
+                    key=f"peso_alcanzado_{ejercicio_key}_{idx}"
                 )
             with col2:
                 rir = st.text_input(
                     "💨 RIR",
                     value=e.get("rir", ""),
-                    key=f"rir_{idx}"
+                    key=f"rir_{ejercicio_key}_{idx}"
                 )
 
             comentario_input = st.text_input(
                 "📝 Comentario",
                 value=e.get("comentario", ""),
-                key=f"coment_{e['ejercicio']}"
+                key=f"coment_{ejercicio_key}_{idx}"
             )
 
             if e.get("video"):
@@ -172,7 +175,7 @@ def ver_rutinas():
             doc_id = f"{correo_normalizado}_{fecha_normalizada}_{e['dia']}_{e['circuito']}_{e['ejercicio']}".lower().replace(" ", "_")
             doc_ref = db.collection("rutinas").document(doc_id)
 
-            if st.button(f"💾 Guardar cambios - {e['ejercicio']}", key=f"guardar_{e['ejercicio']}"):
+            if st.button(f"💾 Guardar cambios - {e['ejercicio']}", key=f"guardar_{ejercicio_key}_{idx}"):
                 try:
                     doc_ref.update({
                         "peso_alcanzado": peso_alcanzado,
