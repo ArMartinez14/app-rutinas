@@ -149,20 +149,29 @@ def ver_rutinas():
             col1, col2 = st.columns(2)
 
             with col1:
+                st.markdown("Peso Alcanzado", unsafe_allow_html=True)
+                st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
                 peso_alcanzado = st.text_input(
-                    "🏋️ Peso Alcanzado (kg)",
+                    label="Peso Alcanzado",
                     value=e.get("peso_alcanzado", ""),
-                    key=f"peso_alcanzado_{ejercicio_key}_{idx}"
+                    key=f"peso_alcanzado_{ejercicio_key}_{idx}",
+                    label_visibility="collapsed"
                 )
+                st.markdown("</div>", unsafe_allow_html=True)
+
             with col2:
+                st.markdown("RIR", unsafe_allow_html=True)
+                st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
                 rir = st.text_input(
-                    "💨 RIR",
+                    label="RIR",
                     value=e.get("rir", ""),
-                    key=f"rir_{ejercicio_key}_{idx}"
+                    key=f"rir_{ejercicio_key}_{idx}",
+                    label_visibility="collapsed"
                 )
+                st.markdown("</div>", unsafe_allow_html=True)
 
             comentario_input = st.text_input(
-                "📝 Comentario",
+                "Comentario",
                 value=e.get("comentario", ""),
                 key=f"coment_{ejercicio_key}_{idx}"
             )
@@ -172,7 +181,8 @@ def ver_rutinas():
 
             correo_normalizado = e["correo"].replace("@", "_").replace(".", "_")
             fecha_normalizada = e["fecha_lunes"].replace("-", "_")
-            doc_id = f"{correo_normalizado}_{fecha_normalizada}_{e['dia']}_{e['circuito']}_{e['ejercicio']}".lower().replace(" ", "_")
+            doc_id = f"{correo_normalizado}_{fecha_normalizada}_{e['dia']}_{e['circuito']}_{e['ejercicio']}".lower().replace(
+                " ", "_")
             doc_ref = db.collection("rutinas").document(doc_id)
 
             if st.button(f"💾 Guardar cambios - {e['ejercicio']}", key=f"guardar_{ejercicio_key}_{idx}"):
