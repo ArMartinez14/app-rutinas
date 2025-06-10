@@ -187,12 +187,28 @@ def ver_rutinas():
 
             if st.button(f"💾 Guardar cambios - {e['ejercicio']}", key=f"guardar_{ejercicio_key}_{idx}"):
                 try:
+                    # Guardar campos actualizados en el documento actual
                     doc_ref.update({
                         "peso_alcanzado": peso_alcanzado,
                         "rir": rir,
                         "comentario": comentario_input
                     })
                     st.success("✅ Registro actualizado exitosamente.")
+
+                    # Ejecutar función de actualización de progresión solo si hay dato
+                    if peso_alcanzado not in [None, ""]:
+                        actualizar_progresiones_individual(
+                            nombre=e["cliente"],
+                            correo=e["correo"],
+                            ejercicio=e["ejercicio"],
+                            circuito=e.get("circuito", ""),  # puede venir como 'D'
+                            bloque=e.get("bloque", e.get("seccion", "")),  # puede venir como 'Work Out'
+                            fecha_actual_lunes=e["fecha_lunes"],  # formato correcto 'YYYY-MM-DD'
+                            dia_numero=int(e["dia"]),  # está como string tipo "2"
+                            peso_alcanzado=float(peso_alcanzado)
+                        )
+                        st.info("📈 Peso actualizado en semana siguiente.")
+
                 except Exception as error:
                     st.error("❌ No se pudo guardar. Es posible que el documento no exista con ese ID.")
                     st.exception(error)
