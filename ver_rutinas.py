@@ -143,29 +143,26 @@ def ver_rutinas():
             st.session_state.ejercicio_idx = idx
 
         if st.session_state.get("ejercicio_idx") == idx:
-            num_series = e.get("series") or 0
-            registro_series = e.get("registro_series", [{}]*num_series)
+            col1, col2 = st.columns(2)
 
-            header_cols = st.columns([0.5, 0.5, 0.5])
-            header_cols[0].markdown("<div style='text-align:center; font-weight:bold;'>Serie</div>", unsafe_allow_html=True)
-            header_cols[1].markdown("<div style='text-align:center; font-weight:bold;'>Reps</div>", unsafe_allow_html=True)
-            header_cols[2].markdown("<div style='text-align:center; font-weight:bold;'>Peso (kg)</div>", unsafe_allow_html=True)
+            with col1:
+                peso_alcanzado = st.text_input(
+                    "🏋️ Peso Alcanzado (kg)",
+                    value=e.get("peso_alcanzado", ""),
+                    key=f"peso_alcanzado_{idx}"
+                )
+            with col2:
+                rir = st.text_input(
+                    "💨 RIR",
+                    value=e.get("rir", ""),
+                    key=f"rir_{idx}"
+                )
 
-            nuevas_series = []
-            for i in range(num_series):
-                col1, col2, col3 = st.columns([0.4, 0.4, 0.4])
-                col1.markdown(f"<div style='text-align:center; vertical-align:middle'>{i + 1}</div>", unsafe_allow_html=True)
-                with col2:
-                    st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
-                    reps_input = st.text_input("Reps", value=registro_series[i].get("reps", ""), key=f"reps_{e['ejercicio']}_{i}", label_visibility="collapsed")
-                    st.markdown("</div>", unsafe_allow_html=True)
-                with col3:
-                    st.markdown("<div class='compact-input'>", unsafe_allow_html=True)
-                    peso_input = st.text_input("Peso", value=registro_series[i].get("peso", ""), key=f"peso_{e['ejercicio']}_{i}", label_visibility="collapsed")
-                    st.markdown("</div>", unsafe_allow_html=True)
-                nuevas_series.append({"reps": reps_input, "peso": peso_input})
-
-            comentario_input = st.text_input("📝 Comentario", value=e.get("comentario", ""), key=f"coment_{e['ejercicio']}")
+            comentario_input = st.text_input(
+                "📝 Comentario",
+                value=e.get("comentario", ""),
+                key=f"coment_{e['ejercicio']}"
+            )
 
             if e.get("video"):
                 st.video(e["video"])
@@ -178,7 +175,8 @@ def ver_rutinas():
             if st.button(f"💾 Guardar cambios - {e['ejercicio']}", key=f"guardar_{e['ejercicio']}"):
                 try:
                     doc_ref.update({
-                        "registro_series": nuevas_series,
+                        "peso_alcanzado": peso_alcanzado,
+                        "rir": rir,
                         "comentario": comentario_input
                     })
                     st.success("✅ Registro actualizado exitosamente.")
