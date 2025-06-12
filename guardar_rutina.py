@@ -10,23 +10,35 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
         for semana in range(int(semanas)):
             fecha_semana = fecha_inicio + timedelta(weeks=semana)
             fecha_str = fecha_semana.strftime("%Y-%m-%d")
-            fecha_normalizada = fecha_semana.strftime("%Y_%m_%d")
-            correo_normalizado = correo.replace("@", "_").replace(".", "_")
+            fecha_norm = fecha_semana.strftime("%Y_%m_%d")
+            correo_norm = correo.replace("@", "_").replace(".", "_")
             nombre_normalizado = normalizar_texto(nombre_sel.title())
+
+            rutina_semana = {
+                "cliente": nombre_normalizado,
+                "correo": correo,
+                "fecha_lunes": fecha_str,
+                "entrenador": entrenador,
+                "rutina": {}
+            }
 
             for i, dia_nombre in enumerate(dias):
                 dia_key = f"rutina_dia_{i + 1}"
                 ejercicios = st.session_state.get(dia_key, [])
                 numero_dia = str(i + 1)
+                lista_ejercicios = []
 
                 for ejercicio in ejercicios:
+                    if not ejercicio.get("Ejercicio", "").strip():
+                        continue  # 🔒 Omitir si el ejercicio está vacío
+
                     ejercicio_mod = ejercicio.copy()
 
-                    # Aplicar progresiones múltiples (1 a 5)
+                    # === APLICAR PROGRESIONES ===
                     for variable_objetivo in ["peso", "repeticiones", "rir", "tiempo", "velocidad"]:
                         valor_original = ejercicio.get(variable_objetivo, "")
                         if not valor_original:
-                            continue  # ignorar si no hay valor
+                            continue
 
                         valor_actual = valor_original
 
@@ -44,22 +56,13 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
                             except:
                                 semanas_aplicar = []
 
-                            for s in range(2, semana + 2):  # semana + 1 es semana actual (indexada desde 0)
+                            for s in range(2, semana + 2):
                                 if s in semanas_aplicar:
                                     valor_actual = aplicar_progresion(valor_actual, float(cantidad), operacion)
 
                         ejercicio_mod[variable_objetivo] = valor_actual
 
-                    # === GUARDAR EN FIRESTORE ===
-                    doc_id = f"{correo_normalizado}_{fecha_normalizada}_{numero_dia}_{ejercicio.get('Circuito', ejercicio.get('circuito', ''))}_{ejercicio.get('Ejercicio', ejercicio.get('ejercicio', ''))}".lower().replace(" ", "_")
-
-
-                    data = {
-                        "cliente": nombre_normalizado,
-                        "correo": correo,
-                        "semana": str(semana + 1),
-                        "fecha_lunes": fecha_str,
-                        "dia": numero_dia,
+                    lista_ejercicios.append({
                         "bloque": ejercicio_mod.get("Sección", ""),
                         "circuito": ejercicio_mod.get("Circuito", ""),
                         "ejercicio": ejercicio_mod.get("Ejercicio", ""),
@@ -70,10 +73,16 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
                         "velocidad": ejercicio_mod.get("Velocidad", ""),
                         "rir": ejercicio_mod.get("Rir", ""),
                         "tipo": ejercicio_mod.get("Tipo", ""),
-                        "entrenador": entrenador
-                    }
+                        "video": ejercicio_mod.get("Video", "")
+                    })
 
-                    db.collection("rutinas").document(doc_id).set(data)
+                if lista_ejercicios:  # ✅ Solo guardar el día si hay ejercicios válidos
+                    rutina_semana["rutina"][numero_dia] = lista_ejercicios
+
+            # === GUARDAR SEMANA COMPLETA SOLO SI HAY DÍAS VÁLIDOS ===
+            if rutina_semana["rutina"]:
+                doc_id = f"{correo_norm}_{fecha_norm}"
+                db.collection("rutinas_semanales").document(doc_id).set(rutina_semana)
 
         st.success(f"✅ Rutina generada correctamente para {semanas} semanas.")
 
