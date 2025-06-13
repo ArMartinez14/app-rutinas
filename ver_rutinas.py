@@ -102,8 +102,8 @@ def ver_rutinas():
         ejercicios_por_circuito.setdefault(circuito, []).append(e)
 
     for circuito, lista in sorted(ejercicios_por_circuito.items()):
-        if circuito == "A": st.subheader("🏁 Warm-Up")
-        elif circuito == "D": st.subheader("🔥 Workout")
+        if circuito == "A": st.subheader("Warm-Up")
+        elif circuito == "D": st.subheader("Workout")
 
         st.markdown(f"### Circuito {circuito}")
         st.markdown("<div class='bloque'>", unsafe_allow_html=True)
