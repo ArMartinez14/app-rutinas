@@ -88,7 +88,7 @@ def ver_rutinas():
 
     st.markdown(f"### Ejercicios del día {dia_sel}")
 
-    # === MOSTRAR Y EDITAR POR CIRCUITO ===
+    # === ESTILOS ===
     st.markdown("""
         <style>
         .compact-input input {
@@ -101,8 +101,10 @@ def ver_rutinas():
             background-color: #f5f5f5;
             margin-bottom: 8px;
         }
-        .separador {
-            height: 20px;
+        .linea-blanca {
+            height: 2px;
+            background-color: #fff;
+            margin: 15px 0;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -121,11 +123,10 @@ def ver_rutinas():
             st.subheader("🔥 Workout")
 
         st.markdown(f"### Circuito {circuito}")
+        st.markdown("<div class='bloque'>", unsafe_allow_html=True)
 
         mostrar = st.checkbox(f"Editar circuito {circuito}", key=f"edit_circuito_{circuito}")
         mostrar_circuitos[circuito] = mostrar
-
-        st.markdown("<div class='bloque'>", unsafe_allow_html=True)
 
         for idx, e in enumerate(lista):
             ejercicio = e.get("ejercicio", f"Ejercicio {idx+1}")
@@ -143,18 +144,15 @@ def ver_rutinas():
                 col1, col2 = st.columns([3, 1])
                 with col1:
                     e["peso_alcanzado"] = st.text_input("", value=e.get("peso_alcanzado", ""), placeholder="Peso", key=f"peso_{ejercicio_id}", label_visibility="collapsed")
-                    st.markdown("<div class='compact-input'></div>", unsafe_allow_html=True)
                     e["comentario"] = st.text_input("", value=e.get("comentario", ""), placeholder="Comentario", key=f"coment_{ejercicio_id}", label_visibility="collapsed")
-                    st.markdown("<div class='compact-input'></div>", unsafe_allow_html=True)
                 with col2:
                     e["rir"] = st.text_input("", value=e.get("rir", ""), placeholder="RIR", key=f"rir_{ejercicio_id}", label_visibility="collapsed")
-                    st.markdown("<div class='compact-input'></div>", unsafe_allow_html=True)
 
             if e.get("video"):
                 st.video(e["video"])
 
         st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("<div class='separador'></div>", unsafe_allow_html=True)
+        st.markdown("<div class='linea-blanca'></div>", unsafe_allow_html=True)
 
     # === GUARDAR CAMBIOS DEL DÍA ===
     if st.button("💾 Guardar cambios del día"):
