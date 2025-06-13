@@ -31,7 +31,7 @@ def editar_rutinas():
         if doc_id.startswith(correo_normalizado):
             partes = doc_id.split("_")
             if len(partes) >= 6:
-                fecha = f"{partes[3]}_{partes[4]}_{partes[5]}"
+                fecha = f"{partes[3]}-{partes[4]}-{partes[5]}"  # ahora con guiones
                 semanas.add(fecha)
 
     semanas = sorted(semanas)
@@ -79,13 +79,13 @@ def editar_rutinas():
         }
         ejercicios_editables.append(ejercicio_editado)
 
-        if st.button("✅ Aplicar cambios a este día y futuras semanas", key="btn_guardar_cambios"):
-
-            try:
-                fecha_sel = datetime.strptime(semana_sel, "%Y-%m-%d")  # CAMBIO AQUÍ
-            except ValueError:
-                st.error(f"Formato de fecha inválido: {semana_sel}")
-                return
+    # === Botón corregido con key única por día ===
+    if st.button("✅ Aplicar cambios a este día y futuras semanas", key=f"btn_guardar_cambios_{dia_sel}"):
+        try:
+            fecha_sel = datetime.strptime(semana_sel, "%Y-%m-%d")
+        except ValueError:
+            st.error(f"Formato de fecha inválido: {semana_sel}")
+            return
 
         total_actualizados = 0
 
@@ -97,10 +97,10 @@ def editar_rutinas():
             for doc in db.collection("rutinas").stream():
                 data = doc.to_dict()
                 if (
-                        data.get("correo", "").replace("@", "_").replace(".", "_").lower() == correo_normalizado and
-                        data.get("ejercicio", "") == nombre_original and
-                        data.get("dia", "") == dia_original and
-                        data.get("circuito", "") == circuito_original
+                    data.get("correo", "").replace("@", "_").replace(".", "_").lower() == correo_normalizado and
+                    data.get("ejercicio", "") == nombre_original and
+                    data.get("dia", "") == dia_original and
+                    data.get("circuito", "") == circuito_original
                 ):
                     fecha_doc_str = data.get("fecha_lunes", "")
                     try:
