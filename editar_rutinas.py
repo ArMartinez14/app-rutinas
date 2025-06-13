@@ -63,9 +63,9 @@ def editar_rutinas():
         ejercicio_editado = ejercicio.copy()
         ejercicio_editado["ejercicio"] = col1.text_input("", value=ejercicio.get("ejercicio", ""), key=f"ej_{idx}_nombre")
         ejercicio_editado["series"] = col2.number_input("", value=int(ejercicio.get("series", 0)), key=f"ej_{idx}_series")
-        ejercicio_editado["repeticiones"] = int(col3.text_input("", value=str(ejercicio.get("repeticiones", "")), key=f"ej_{idx}_reps")) if col3.text_input("", value=str(ejercicio.get("repeticiones", "")), key=f"ej_{idx}_reps") else None
-        ejercicio_editado["peso"] = col4.text_input("", value=ejercicio.get("peso", ""), key=f"ej_{idx}_peso")
-        ejercicio_editado["rir"] = col5.text_input("", value=ejercicio.get("rir", ""), key=f"ej_{idx}_rir")
+        ejercicio_editado["repeticiones"] = int(col3.text_input("", value=str(ejercicio.get("repeticiones", ejercicio.get("reps", ""))), key=f"ej_{idx}_reps")) if col3.text_input("", value=str(ejercicio.get("repeticiones", ejercicio.get("reps", ""))), key=f"ej_{idx}_reps") else None
+        ejercicio_editado["peso"] = col4.text_input("", value=str(ejercicio.get("peso", "")), key=f"ej_{idx}_peso") or None
+        ejercicio_editado["rir"] = col5.text_input("", value=ejercicio.get("rir", ""), key=f"ej_{idx}_rir") or None
         ejercicios_editables.append(ejercicio_editado)
 
     if st.button("✅ Aplicar cambios a este día y futuras semanas", key=f"btn_guardar_cambios_{dia_sel}"):
