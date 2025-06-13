@@ -174,3 +174,4 @@ def ver_rutinas():
         except Exception as error:
             st.error("❌ Error al guardar.")
             st.exception(error)
+
