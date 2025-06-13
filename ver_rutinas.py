@@ -91,42 +91,43 @@ def ver_rutinas():
     # === MOSTRAR Y EDITAR EJERCICIOS ===
     for idx, e in enumerate(ejercicios):
         circuito = e.get("circuito", "Z").upper()
-        ejercicio = e.get("ejercicio", "Ejercicio")
+        ejercicio = e.get("ejercicio", f"Ejercicio {idx+1}")
         series = e.get("series", "")
         reps = e.get("repeticiones", "")
         peso = e.get("peso", "")
         detalles = f"{series}x{reps}" if series and reps else ""
         detalles += f" · {peso}kg" if peso else ""
 
-        nombre_display = f"**{circuito} - {ejercicio}** {detalles}"
+        # Clave única por ejercicio
+        ejercicio_id = f"{circuito}_{ejercicio}_{idx}".lower().replace(" ", "_").replace("(", "").replace(")", "")
 
-    if f"mostrar_inputs_{idx}" not in st.session_state:
-        st.session_state[f"mostrar_inputs_{idx}"] = False
+    # Mostrar encabezado como botón
+    if f"mostrar_inputs_{ejercicio_id}" not in st.session_state:
+        st.session_state[f"mostrar_inputs_{ejercicio_id}"] = False
 
-    # Botón que simula el encabezado del ejercicio y activa/desactiva inputs
-    if st.button(nombre_display, key=f"btn_toggle_{idx}"):
-        st.session_state[f"mostrar_inputs_{idx}"] = not st.session_state[f"mostrar_inputs_{idx}"]
+    if st.button(f"**{circuito} - {ejercicio}** {detalles}", key=f"btn_{ejercicio_id}"):
+        st.session_state[f"mostrar_inputs_{ejercicio_id}"] = not st.session_state[f"mostrar_inputs_{ejercicio_id}"]
 
-    # Mostrar inputs si está activado
-    if st.session_state[f"mostrar_inputs_{idx}"]:
+    if st.session_state[f"mostrar_inputs_{ejercicio_id}"]:
         col1, col2 = st.columns(2)
         with col1:
             e["peso_alcanzado"] = st.text_input(
-                "", value=e.get("peso_alcanzado", ""), placeholder="Peso Alcanzado", key=f"peso_{idx}",
+                "", value=e.get("peso_alcanzado", ""), placeholder="Peso Alcanzado", key=f"peso_{ejercicio_id}",
                 label_visibility="collapsed"
             )
         with col2:
             e["rir"] = st.text_input(
-                "", value=e.get("rir", ""), placeholder="RIR", key=f"rir_{idx}",
+                "", value=e.get("rir", ""), placeholder="RIR", key=f"rir_{ejercicio_id}",
                 label_visibility="collapsed"
             )
         e["comentario"] = st.text_input(
-            "", value=e.get("comentario", ""), placeholder="Comentario", key=f"coment_{idx}",
+            "", value=e.get("comentario", ""), placeholder="Comentario", key=f"coment_{ejercicio_id}",
             label_visibility="collapsed"
         )
 
     if e.get("video"):
         st.video(e["video"])
+
 
 
     # === GUARDAR CAMBIOS DEL DÍA ===
