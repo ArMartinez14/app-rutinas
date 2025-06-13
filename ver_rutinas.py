@@ -100,10 +100,8 @@ def ver_rutinas():
             border-radius: 12px;
             background-color: #f5f5f5;
             margin-bottom: 8px;
-        }
-        .separador {
-            height: 10px;
-        }
+      
+        
         </style>
     """, unsafe_allow_html=True)
 
