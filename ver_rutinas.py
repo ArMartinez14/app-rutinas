@@ -95,8 +95,10 @@ def ver_rutinas():
         series = e.get("series", "")
         reps = e.get("repeticiones", "")
         peso = e.get("peso", "")
-        st.markdown(f"**{circuito} - {ejercicio}**")
-        st.markdown(f"`{series} x {reps} - {peso}kg`")
+        detalles = f"{series}x{reps}" if series and reps else ""
+        detalles += f" · {peso}kg" if peso else ""
+
+        st.markdown(f"**{circuito} - {ejercicio}** {detalles}")
 
         col1, col2 = st.columns(2)
 
