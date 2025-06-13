@@ -92,14 +92,17 @@ def ver_rutinas():
     st.markdown("""
         <style>
         .compact-input input {
-            font-size: 6px !important;
-            width: 50px !important;
+            font-size: 12px !important;
+            width: 100px !important;
         }
-        
+       
         .linea-blanca {
-            height: 2px;
-            background-color: #fff;
+            border-bottom: 2px solid white;
             margin: 15px 0;
+        }
+        .ejercicio {
+            font-size: 18px !important;
+            font-weight: bold;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -120,9 +123,6 @@ def ver_rutinas():
         st.markdown(f"### Circuito {circuito}")
         st.markdown("<div class='bloque'>", unsafe_allow_html=True)
 
-        mostrar = st.checkbox(f"Editar circuito {circuito}", key=f"edit_circuito_{circuito}")
-        mostrar_circuitos[circuito] = mostrar
-
         for idx, e in enumerate(lista):
             ejercicio = e.get("ejercicio", f"Ejercicio {idx+1}")
             series = e.get("series", "")
@@ -133,7 +133,9 @@ def ver_rutinas():
 
             ejercicio_id = f"{circuito}_{ejercicio}_{idx}".lower().replace(" ", "_").replace("(", "").replace(")", "").replace("/", "")
 
-            st.markdown(f"**{ejercicio}** {detalles}")
+            st.markdown(f"<div class='ejercicio'>{ejercicio}</div> <span>{detalles}</span>", unsafe_allow_html=True)
+
+            mostrar = st.checkbox(f"Editar ejercicio {idx+1}", key=f"edit_{circuito}_{idx}")
 
             if mostrar:
                 col1, col2 = st.columns([3, 1])
