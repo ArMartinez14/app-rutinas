@@ -95,20 +95,20 @@ def ver_rutinas():
         series = e.get("series", "")
         reps = e.get("repeticiones", "")
         peso = e.get("peso", "")
-
         detalles = f"{series}x{reps}" if series and reps else ""
         detalles += f" · {peso}kg" if peso else ""
 
-        st.markdown(f"**{circuito} - {ejercicio}** {detalles}")
+        nombre_display = f"**{circuito} - {ejercicio}** {detalles}"
 
-    # Mostrar botón para editar campos
-    if f"mostrar_{idx}" not in st.session_state:
-        st.session_state[f"mostrar_{idx}"] = False
+    if f"mostrar_inputs_{idx}" not in st.session_state:
+        st.session_state[f"mostrar_inputs_{idx}"] = False
 
-    if st.button("✏️ Editar", key=f"btn_edit_{idx}"):
-        st.session_state[f"mostrar_{idx}"] = not st.session_state[f"mostrar_{idx}"]
+    # Botón que simula el encabezado del ejercicio y activa/desactiva inputs
+    if st.button(nombre_display, key=f"btn_toggle_{idx}"):
+        st.session_state[f"mostrar_inputs_{idx}"] = not st.session_state[f"mostrar_inputs_{idx}"]
 
-    if st.session_state[f"mostrar_{idx}"]:
+    # Mostrar inputs si está activado
+    if st.session_state[f"mostrar_inputs_{idx}"]:
         col1, col2 = st.columns(2)
         with col1:
             e["peso_alcanzado"] = st.text_input(
