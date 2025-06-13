@@ -92,8 +92,8 @@ def ver_rutinas():
     st.markdown("""
         <style>
         .compact-input input {
-            font-size: 15px !important;
-            width: 100px !important;
+            font-size: 6px !important;
+            width: 50px !important;
         }
         
         .linea-blanca {
