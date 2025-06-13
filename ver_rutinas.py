@@ -95,7 +95,12 @@ def ver_rutinas():
             font-size: 12px !important;
             width: 100px !important;
         }
-       
+        .bloque {
+            padding: 10px;
+            border-radius: 12px;
+            background-color: #f5f5f5;
+            margin-bottom: 8px;
+        }
         .linea-blanca {
             border-bottom: 2px solid white;
             margin: 15px 0;
@@ -128,12 +133,12 @@ def ver_rutinas():
             series = e.get("series", "")
             reps = e.get("repeticiones", "")
             peso = e.get("peso", "")
-            detalles = f"{series}x{reps}" if series and reps else ""
-            detalles += f" · {peso}kg" if peso else ""
-
             ejercicio_id = f"{circuito}_{ejercicio}_{idx}".lower().replace(" ", "_").replace("(", "").replace(")", "").replace("/", "")
 
-            st.markdown(f"<div class='ejercicio'>{ejercicio}</div> <span>{detalles}</span>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div class='ejercicio'>{ejercicio} &nbsp; <span style='font-size:16px; font-weight:normal;'>{series}x{reps} · {peso}kg</span></div>",
+                unsafe_allow_html=True
+            )
 
             mostrar = st.checkbox(f"Editar ejercicio {idx+1}", key=f"edit_{circuito}_{idx}")
 
