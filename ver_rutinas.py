@@ -91,31 +91,43 @@ def ver_rutinas():
     # === MOSTRAR Y EDITAR EJERCICIOS ===
     for idx, e in enumerate(ejercicios):
         circuito = e.get("circuito", "Z").upper()
-        ejercicio = e.get("ejercicio", "Ejercicio sin nombre")
+        ejercicio = e.get("ejercicio", "Ejercicio")
         series = e.get("series", "")
         reps = e.get("repeticiones", "")
         peso = e.get("peso", "")
+
         detalles = f"{series}x{reps}" if series and reps else ""
         detalles += f" · {peso}kg" if peso else ""
 
         st.markdown(f"**{circuito} - {ejercicio}** {detalles}")
 
+    # Mostrar botón para editar campos
+    if f"mostrar_{idx}" not in st.session_state:
+        st.session_state[f"mostrar_{idx}"] = False
+
+    if st.button("✏️ Editar", key=f"btn_edit_{idx}"):
+        st.session_state[f"mostrar_{idx}"] = not st.session_state[f"mostrar_{idx}"]
+
+    if st.session_state[f"mostrar_{idx}"]:
         col1, col2 = st.columns(2)
-
-
         with col1:
-            peso_alcanzado = st.text_input("Peso Alcanzado", value=e.get("peso_alcanzado", ""), key=f"peso_{idx}")
+            e["peso_alcanzado"] = st.text_input(
+                "", value=e.get("peso_alcanzado", ""), placeholder="Peso Alcanzado", key=f"peso_{idx}",
+                label_visibility="collapsed"
+            )
         with col2:
-            rir = st.text_input("RIR", value=e.get("rir", ""), key=f"rir_{idx}")
+            e["rir"] = st.text_input(
+                "", value=e.get("rir", ""), placeholder="RIR", key=f"rir_{idx}",
+                label_visibility="collapsed"
+            )
+        e["comentario"] = st.text_input(
+            "", value=e.get("comentario", ""), placeholder="Comentario", key=f"coment_{idx}",
+            label_visibility="collapsed"
+        )
 
-        comentario = st.text_input("Comentario", value=e.get("comentario", ""), key=f"coment_{idx}")
+    if e.get("video"):
+        st.video(e["video"])
 
-        e["peso_alcanzado"] = peso_alcanzado
-        e["rir"] = rir
-        e["comentario"] = comentario
-
-        if e.get("video"):
-            st.video(e["video"])
 
     # === GUARDAR CAMBIOS DEL DÍA ===
     if st.button("💾 Guardar cambios del día"):
