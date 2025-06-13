@@ -6,7 +6,6 @@ import json, os, re
 from utils import actualizar_progresiones_individual
 
 def ver_rutinas():
-    # === INICIALIZAR FIREBASE ===
     if not firebase_admin._apps:
         cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
         with open("/tmp/firebase.json", "w") as f:
@@ -16,7 +15,6 @@ def ver_rutinas():
 
     db = firestore.client()
 
-    # === FUNCIONES AUXILIARES ===
     def obtener_fecha_lunes():
         hoy = datetime.now()
         lunes = hoy - timedelta(days=hoy.weekday())
@@ -40,7 +38,6 @@ def ver_rutinas():
             docs = db.collection("rutinas_semanales").where("correo", "==", correo).stream()
         return [doc.to_dict() for doc in docs]
 
-    # === ENTRADA DE CORREO ===
     correo_input = st.text_input("🔑 Ingresa tu correo:", key="correo_input")
     if not correo_input:
         st.stop()
@@ -55,35 +52,34 @@ def ver_rutinas():
     nombre = datos_usuario.get("nombre", "Usuario")
     rol = datos_usuario.get("rol", "desconocido")
 
-    # Mostrar u ocultar datos personales
     mostrar_info = st.checkbox("👤 Mostrar información personal", value=True)
     if mostrar_info:
         st.success(f"Bienvenido {nombre} ({rol})")
 
-    # === CARGAR RUTINAS (caché) ===
     rutinas = cargar_rutinas_filtradas(correo, rol)
     if not rutinas:
         st.warning("⚠️ No se encontraron rutinas.")
         st.stop()
 
-    # === SELECCIÓN DE CLIENTE ===
-    clientes = sorted(set(r["cliente"] for r in rutinas if "cliente" in r))
-    cliente_input = st.text_input("👤 Escribe el nombre del cliente:", key="cliente_input")
-    cliente_opciones = [c for c in clientes if cliente_input.lower() in c.lower()]
-    cliente_sel = st.selectbox("Selecciona cliente:", cliente_opciones if cliente_opciones else clientes, key="cliente_sel")
+    if mostrar_info:
+        clientes = sorted(set(r["cliente"] for r in rutinas if "cliente" in r))
+        cliente_input = st.text_input("👤 Escribe el nombre del cliente:", key="cliente_input")
+        cliente_opciones = [c for c in clientes if cliente_input.lower() in c.lower()]
+        cliente_sel = st.selectbox("Selecciona cliente:", cliente_opciones if cliente_opciones else clientes, key="cliente_sel")
 
-    # === SELECCIÓN DE SEMANA ===
-    rutinas_cliente = [r for r in rutinas if r.get("cliente") == cliente_sel]
-    semanas = sorted({r["fecha_lunes"] for r in rutinas_cliente}, reverse=True)
-    semana_actual = obtener_fecha_lunes()
-    semana_sel = st.selectbox("📆 Semana", semanas, index=semanas.index(semana_actual) if semana_actual in semanas else 0, key="semana_sel")
+        rutinas_cliente = [r for r in rutinas if r.get("cliente") == cliente_sel]
+        semanas = sorted({r["fecha_lunes"] for r in rutinas_cliente}, reverse=True)
+        semana_actual = obtener_fecha_lunes()
+        semana_sel = st.selectbox("📆 Semana", semanas, index=semanas.index(semana_actual) if semana_actual in semanas else 0, key="semana_sel")
+    else:
+        rutinas_cliente = rutinas
+        semana_sel = obtener_fecha_lunes()
 
     rutina_doc = next((r for r in rutinas_cliente if r["fecha_lunes"] == semana_sel), None)
     if not rutina_doc:
         st.warning("⚠️ No hay rutina para esa semana.")
         st.stop()
 
-    # === SELECCIÓN DE DÍA ===
     dias_disponibles = sorted(rutina_doc["rutina"].keys(), key=int)
     dia_sel = st.selectbox("📅 Día", dias_disponibles, key="dia_sel")
 
@@ -92,27 +88,12 @@ def ver_rutinas():
 
     st.markdown(f"### Ejercicios del día {dia_sel}")
 
-    # === ESTILOS ===
     st.markdown("""
         <style>
-        .compact-input input {
-            font-size: 12px !important;
-            width: 100px !important;
-        }
-        .bloque {
-            padding: 10px;
-            border-radius: 12px;
-            background-color: #f5f5f5;
-            margin-bottom: 8px;
-        }
-        .linea-blanca {
-            border-bottom: 2px solid white;
-            margin: 15px 0;
-        }
-        .ejercicio {
-            font-size: 18px !important;
-            font-weight: bold;
-        }
+        .compact-input input { font-size: 12px !important; width: 100px !important; }
+        .bloque { padding: 10px; border-radius: 12px; background-color: #f5f5f5; margin-bottom: 8px; }
+        .linea-blanca { border-bottom: 2px solid white; margin: 15px 0; }
+        .ejercicio { font-size: 18px !important; font-weight: bold; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -121,13 +102,9 @@ def ver_rutinas():
         circuito = e.get("circuito", "Z").upper()
         ejercicios_por_circuito.setdefault(circuito, []).append(e)
 
-    mostrar_circuitos = {}
-
     for circuito, lista in sorted(ejercicios_por_circuito.items()):
-        if circuito == "A":
-            st.subheader("🏁 Warm-Up")
-        elif circuito == "D":
-            st.subheader("🔥 Workout")
+        if circuito == "A": st.subheader("🏁 Warm-Up")
+        elif circuito == "D": st.subheader("🔥 Workout")
 
         st.markdown(f"### Circuito {circuito}")
         st.markdown("<div class='bloque'>", unsafe_allow_html=True)
@@ -160,16 +137,13 @@ def ver_rutinas():
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("<div class='linea-blanca'></div>", unsafe_allow_html=True)
 
-    # === GUARDAR CAMBIOS DEL DÍA ===
     if st.button("💾 Guardar cambios del día"):
         correo_norm = normalizar_correo(correo)
         fecha_norm = semana_sel.replace("-", "_")
         doc_id = f"{correo_norm}_{fecha_norm}"
 
         try:
-            db.collection("rutinas_semanales").document(doc_id).update({
-                f"rutina.{dia_sel}": ejercicios
-            })
+            db.collection("rutinas_semanales").document(doc_id).update({ f"rutina.{dia_sel}": ejercicios })
             st.success("✅ Día actualizado correctamente.")
 
             for e in ejercicios:
@@ -184,7 +158,6 @@ def ver_rutinas():
                         dia_numero=int(dia_sel),
                         peso_alcanzado=float(e["peso_alcanzado"])
                     )
-
         except Exception as error:
             st.error("❌ Error al guardar.")
             st.exception(error)
