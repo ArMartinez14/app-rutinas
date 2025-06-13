@@ -91,8 +91,15 @@ def ver_rutinas():
     # === MOSTRAR Y EDITAR EJERCICIOS ===
     for idx, e in enumerate(ejercicios):
         circuito = e.get("circuito", "Z").upper()
-        st.markdown(f"**{circuito} - {e['ejercicio']}**")
+        ejercicio = e.get("ejercicio", "Ejercicio sin nombre")
+        series = e.get("series", "")
+        reps = e.get("repeticiones", "")
+        peso = e.get("peso", "")
+        st.markdown(f"**{circuito} - {ejercicio}**")
+        st.markdown(f"`{series} x {reps} - {peso}kg`")
+
         col1, col2 = st.columns(2)
+
 
         with col1:
             peso_alcanzado = st.text_input("Peso Alcanzado", value=e.get("peso_alcanzado", ""), key=f"peso_{idx}")
