@@ -100,8 +100,10 @@ def ver_rutinas():
             border-radius: 12px;
             background-color: #f5f5f5;
             margin-bottom: 8px;
-      
-        
+        }
+        .separador {
+            height: 20px;
+        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -120,6 +122,9 @@ def ver_rutinas():
 
         st.markdown(f"### Circuito {circuito}")
 
+        mostrar = st.checkbox(f"Editar circuito {circuito}", key=f"edit_circuito_{circuito}")
+        mostrar_circuitos[circuito] = mostrar
+
         st.markdown("<div class='bloque'>", unsafe_allow_html=True)
 
         for idx, e in enumerate(lista):
@@ -134,7 +139,7 @@ def ver_rutinas():
 
             st.markdown(f"**{ejercicio}** {detalles}")
 
-            if mostrar_circuitos.get(circuito, False):
+            if mostrar:
                 col1, col2 = st.columns([3, 1])
                 with col1:
                     e["peso_alcanzado"] = st.text_input("", value=e.get("peso_alcanzado", ""), placeholder="Peso", key=f"peso_{ejercicio_id}", label_visibility="collapsed")
@@ -147,8 +152,6 @@ def ver_rutinas():
 
             if e.get("video"):
                 st.video(e["video"])
-
-        mostrar_circuitos[circuito] = st.checkbox(f"Editar circuito {circuito}", key=f"edit_circuito_{circuito}")
 
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("<div class='separador'></div>", unsafe_allow_html=True)
