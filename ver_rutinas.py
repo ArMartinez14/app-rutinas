@@ -107,12 +107,12 @@ def ver_rutinas():
             if mostrar:
                 col1, col2 = st.columns([3, 1])
                 with col1:
-                    st.markdown("<div style='font-size:12px;'>", unsafe_allow_html=True)
+                    st.markdown("<div style='font-size:8px;'>", unsafe_allow_html=True)
                     e["peso_alcanzado"] = st.text_input("", value=e.get("peso_alcanzado", ""), placeholder="Peso", key=f"peso_{ejercicio_id}", label_visibility="collapsed")
                     e["comentario"] = st.text_input("", value=e.get("comentario", ""), placeholder="Comentario", key=f"coment_{ejercicio_id}", label_visibility="collapsed")
                     st.markdown("</div>", unsafe_allow_html=True)
                 with col2:
-                    st.markdown("<div style='font-size:12px;'>", unsafe_allow_html=True)
+                    st.markdown("<div style='font-size:8px;'>", unsafe_allow_html=True)
                     e["rir"] = st.text_input("", value=e.get("rir", ""), placeholder="RIR", key=f"rir_{ejercicio_id}", label_visibility="collapsed")
                     st.markdown("</div>", unsafe_allow_html=True)
 
