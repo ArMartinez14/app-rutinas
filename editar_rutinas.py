@@ -56,6 +56,7 @@ def editar_rutinas():
     cols[4].markdown("**RIR**")
 
     st.markdown("**Descripción y Comentario**")
+    ejercicios_editables = []
     dia_rutina = rutina.get(dia_sel, [])
 
     for idx, ejercicio in enumerate(dia_rutina):
@@ -71,6 +72,7 @@ def editar_rutinas():
         col6, col7 = st.columns([2, 3])
         ejercicio_editado["descripcion"] = col6.text_input("Descripción", value=ejercicio.get("descripcion", ""), key=f"ej_{idx}_descripcion")
         ejercicio_editado["comentario"] = col7.text_input("Comentario", value=ejercicio.get("comentario", ""), key=f"ej_{idx}_comentario")
+
         ejercicios_editables.append(ejercicio_editado)
 
     if st.button("✅ Aplicar cambios a este día y futuras semanas", key=f"btn_guardar_cambios_{dia_sel}"):
