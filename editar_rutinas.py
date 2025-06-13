@@ -79,8 +79,13 @@ def editar_rutinas():
         }
         ejercicios_editables.append(ejercicio_editado)
 
-    if st.button("✅ Aplicar cambios a este día y futuras semanas"):
-        fecha_sel = datetime.strptime(semana_sel, "%Y_%m_%d")
+        if st.button("✅ Aplicar cambios a este día y futuras semanas"):
+            try:
+                fecha_sel = datetime.strptime(semana_sel, "%Y-%m-%d")  # CAMBIO AQUÍ
+            except ValueError:
+                st.error(f"Formato de fecha inválido: {semana_sel}")
+                return
+
         total_actualizados = 0
 
         for cambio in ejercicios_editables:
