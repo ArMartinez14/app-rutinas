@@ -79,7 +79,8 @@ def editar_rutinas():
         }
         ejercicios_editables.append(ejercicio_editado)
 
-        if st.button("✅ Aplicar cambios a este día y futuras semanas"):
+        if st.button("✅ Aplicar cambios a este día y futuras semanas", key="btn_guardar_cambios"):
+
             try:
                 fecha_sel = datetime.strptime(semana_sel, "%Y-%m-%d")  # CAMBIO AQUÍ
             except ValueError:
