@@ -88,44 +88,63 @@ def ver_rutinas():
 
     st.markdown(f"### Ejercicios del día {dia_sel}")
 
-    # === MOSTRAR Y EDITAR EJERCICIOS ===
+    # === MOSTRAR Y EDITAR POR CIRCUITO ===
     st.markdown("""
         <style>
         .compact-input input {
             font-size: 12px !important;
-            width: 50px !important;
+            width: 100px !important;
+        }
+        .bloque {
+            padding: 10px;
+            border-radius: 12px;
+            background-color: #f5f5f5;
+            margin-bottom: 16px;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    for idx, e in enumerate(ejercicios):
+    ejercicios_por_circuito = {}
+    for e in ejercicios:
         circuito = e.get("circuito", "Z").upper()
-        ejercicio = e.get("ejercicio", f"Ejercicio {idx+1}")
-        series = e.get("series", "")
-        reps = e.get("repeticiones", "")
-        peso = e.get("peso", "")
-        detalles = f"{series}x{reps}" if series and reps else ""
-        detalles += f" · {peso}kg" if peso else ""
+        ejercicios_por_circuito.setdefault(circuito, []).append(e)
 
-        ejercicio_id = f"{circuito}_{ejercicio}_{idx}".lower().replace(" ", "_").replace("(", "").replace(")", "").replace("/", "")
+    for circuito, lista in sorted(ejercicios_por_circuito.items()):
+        if circuito == "A":
+            st.subheader("🏁 Warm-Up")
+        elif circuito == "D":
+            st.subheader("🔥 Workout")
 
         with st.container():
-            st.markdown(f"**{circuito} - {ejercicio}** {detalles}")
-            mostrar = st.checkbox("Editar", key=f"edit_{ejercicio_id}")
+            st.markdown(f"### Circuito {circuito}")
+            mostrar = st.checkbox(f"Editar {circuito}", key=f"edit_circuito_{circuito}")
+            st.markdown("<div class='bloque'>", unsafe_allow_html=True)
+            for idx, e in enumerate(lista):
+                ejercicio = e.get("ejercicio", f"Ejercicio {idx+1}")
+                series = e.get("series", "")
+                reps = e.get("repeticiones", "")
+                peso = e.get("peso", "")
+                detalles = f"{series}x{reps}" if series and reps else ""
+                detalles += f" · {peso}kg" if peso else ""
 
-            if mostrar:
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    e["peso_alcanzado"] = st.text_input("", value=e.get("peso_alcanzado", ""), placeholder="Peso", key=f"peso_{ejercicio_id}", label_visibility="collapsed")
-                    st.markdown("<div class='compact-input'></div>", unsafe_allow_html=True)
-                    e["comentario"] = st.text_input("", value=e.get("comentario", ""), placeholder="Comentario", key=f"coment_{ejercicio_id}", label_visibility="collapsed")
-                    st.markdown("<div class='compact-input'></div>", unsafe_allow_html=True)
-                with col2:
-                    e["rir"] = st.text_input("", value=e.get("rir", ""), placeholder="RIR", key=f"rir_{ejercicio_id}", label_visibility="collapsed")
-                    st.markdown("<div class='compact-input'></div>", unsafe_allow_html=True)
+                ejercicio_id = f"{circuito}_{ejercicio}_{idx}".lower().replace(" ", "_").replace("(", "").replace(")", "").replace("/", "")
 
-            if e.get("video"):
-                st.video(e["video"])
+                st.markdown(f"**{ejercicio}** {detalles}")
+
+                if mostrar:
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        e["peso_alcanzado"] = st.text_input("", value=e.get("peso_alcanzado", ""), placeholder="Peso", key=f"peso_{ejercicio_id}", label_visibility="collapsed")
+                        st.markdown("<div class='compact-input'></div>", unsafe_allow_html=True)
+                        e["comentario"] = st.text_input("", value=e.get("comentario", ""), placeholder="Comentario", key=f"coment_{ejercicio_id}", label_visibility="collapsed")
+                        st.markdown("<div class='compact-input'></div>", unsafe_allow_html=True)
+                    with col2:
+                        e["rir"] = st.text_input("", value=e.get("rir", ""), placeholder="RIR", key=f"rir_{ejercicio_id}", label_visibility="collapsed")
+                        st.markdown("<div class='compact-input'></div>", unsafe_allow_html=True)
+
+                if e.get("video"):
+                    st.video(e["video"])
+            st.markdown("</div>", unsafe_allow_html=True)
 
     # === GUARDAR CAMBIOS DEL DÍA ===
     if st.button("💾 Guardar cambios del día"):
