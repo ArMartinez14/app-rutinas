@@ -19,43 +19,29 @@ def editar_rutinas():
     if not correo:
         return
 
-    correo_normalizado = correo.replace("@", "_").replace(".", "_").lower()
-
     # === Obtener semanas disponibles ===
     docs = db.collection("rutinas_semanales") \
         .where("correo", "==", correo) \
         .stream()
 
-    semanas_set = set()
+    semanas_dict = {}
     for doc in docs:
         data = doc.to_dict()
         fecha_lunes = data.get("fecha_lunes")
         if fecha_lunes:
-            semanas_set.add(fecha_lunes)
+            semanas_dict[fecha_lunes] = doc.id
 
-    semanas = sorted(semanas_set)
+    semanas = sorted(semanas_dict.keys())
     semana_sel = st.selectbox("Selecciona la semana a editar:", semanas)
     if not semana_sel:
         return
 
-    # === Obtener ejercicios de esa semana ===
-    docs = db.collection("rutinas_semanales") \
-        .where("correo", "==", correo) \
-        .where("fecha_lunes", "==", semana_sel) \
-        .stream()
+    doc_id_semana = semanas_dict[semana_sel]
+    doc_ref = db.collection("rutinas_semanales").document(doc_id_semana)
+    doc_data = doc_ref.get().to_dict()
+    rutina = doc_data.get("rutina", {})
 
-    ejercicios_por_dia = {}
-    for doc in docs:
-        data = doc.to_dict()
-        dia = data.get("dia", "")
-        if dia not in ejercicios_por_dia:
-            ejercicios_por_dia[dia] = []
-        ejercicios_por_dia[dia].append((doc.id, data))
-
-    try:
-        dias_disponibles = sorted(ejercicios_por_dia.keys(), key=lambda x: int(x))
-    except ValueError:
-        dias_disponibles = sorted(ejercicios_por_dia.keys())
+    dias_disponibles = sorted(rutina.keys(), key=lambda x: int(x))
     dia_sel = st.selectbox("Selecciona el día a editar:", dias_disponibles, format_func=lambda x: f"Día {x}")
     if not dia_sel:
         return
@@ -70,19 +56,16 @@ def editar_rutinas():
     cols[4].markdown("**RIR**")
 
     ejercicios_editables = []
+    dia_rutina = rutina.get(dia_sel, [])
 
-    for doc_id, data in ejercicios_por_dia[dia_sel]:
+    for idx, ejercicio in enumerate(dia_rutina):
         col1, col2, col3, col4, col5 = st.columns([3, 1, 2, 2, 1])
         ejercicio_editado = {
-            "doc_id": doc_id,
-            "original": data.get("ejercicio", ""),
-            "dia": data.get("dia", ""),
-            "circuito": data.get("circuito", ""),
-            "ejercicio": col1.text_input("", value=data.get("ejercicio", ""), key=doc_id + "_ejercicio"),
-            "series": col2.number_input("", value=int(data.get("series", 0)), key=doc_id + "_series"),
-            "reps": col3.text_input("", value=data.get("reps", ""), key=doc_id + "_reps"),
-            "peso": col4.text_input("", value=data.get("peso", ""), key=doc_id + "_peso"),
-            "rir": col5.text_input("", value=data.get("rir", ""), key=doc_id + "_rir")
+            "ejercicio": col1.text_input("", value=ejercicio.get("ejercicio", ""), key=f"ej_{idx}_nombre"),
+            "series": col2.number_input("", value=int(ejercicio.get("series", 0)), key=f"ej_{idx}_series"),
+            "reps": col3.text_input("", value=ejercicio.get("reps", ""), key=f"ej_{idx}_reps"),
+            "peso": col4.text_input("", value=ejercicio.get("peso", ""), key=f"ej_{idx}_peso"),
+            "rir": col5.text_input("", value=ejercicio.get("rir", ""), key=f"ej_{idx}_rir")
         }
         ejercicios_editables.append(ejercicio_editado)
 
@@ -93,34 +76,25 @@ def editar_rutinas():
             st.error(f"Formato de fecha inválido: {semana_sel}")
             return
 
+        # Actualizar solo en semanas >= a la actual
+        futuros = db.collection("rutinas_semanales") \
+            .where("correo", "==", correo) \
+            .stream()
+
         total_actualizados = 0
 
-        for cambio in ejercicios_editables:
-            nombre_original = cambio["original"]
-            dia_original = cambio["dia"]
-            circuito_original = cambio["circuito"]
-
-            futuros = db.collection("rutinas_semanales") \
-                .where("correo", "==", correo) \
-                .where("dia", "==", dia_original) \
-                .where("ejercicio", "==", nombre_original) \
-                .where("circuito", "==", circuito_original) \
-                .stream()
-
-            for doc in futuros:
-                data = doc.to_dict()
-                try:
-                    fecha_doc = datetime.strptime(data.get("fecha_lunes", ""), "%Y-%m-%d")
-                    if fecha_doc >= fecha_sel:
-                        db.collection("rutinas_semanales").document(doc.id).update({
-                            "ejercicio": cambio["ejercicio"],
-                            "series": cambio["series"],
-                            "reps": cambio["reps"],
-                            "peso": cambio["peso"],
-                            "rir": cambio["rir"]
-                        })
+        for doc in futuros:
+            data = doc.to_dict()
+            fecha_doc_str = data.get("fecha_lunes", "")
+            try:
+                fecha_doc = datetime.strptime(fecha_doc_str, "%Y-%m-%d")
+                if fecha_doc >= fecha_sel:
+                    rutina_futura = data.get("rutina", {})
+                    if dia_sel in rutina_futura:
+                        rutina_futura[dia_sel] = ejercicios_editables
+                        db.collection("rutinas_semanales").document(doc.id).update({"rutina": rutina_futura})
                         total_actualizados += 1
-                except:
-                    pass
+            except:
+                pass
 
-        st.success(f"Cambios aplicados correctamente a {total_actualizados} ejercicios.")
+        st.success(f"Cambiado exitosamente en {total_actualizados} semana(s) futuras.")
