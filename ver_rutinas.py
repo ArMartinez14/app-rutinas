@@ -1,11 +1,11 @@
-def ver_rutinas():
-    import streamlit as st
-    import firebase_admin
-    from firebase_admin import credentials, firestore
-    from datetime import datetime, timedelta
-    import json, os, re
-    from utils import actualizar_progresiones_individual
+import streamlit as st
+import firebase_admin
+from firebase_admin import credentials, firestore
+from datetime import datetime, timedelta
+import json, os, re
+from utils import actualizar_progresiones_individual
 
+def ver_rutinas():
     # === INICIALIZAR FIREBASE ===
     if not firebase_admin._apps:
         cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
@@ -98,35 +98,23 @@ def ver_rutinas():
         detalles = f"{series}x{reps}" if series and reps else ""
         detalles += f" · {peso}kg" if peso else ""
 
-        ejercicio_id = f"{circuito}_{ejercicio}_{idx}".lower().replace(" ", "_").replace("(", "").replace(")", "")
+        ejercicio_id = f"{circuito}_{ejercicio}_{idx}".lower().replace(" ", "_").replace("(", "").replace(")", "").replace("/", "")
 
-        # Mostrar encabezado bonito
-    st.markdown(f"**{circuito} - {ejercicio}** {detalles}")
+        with st.container():
+            st.markdown(f"**{circuito} - {ejercicio}** {detalles}")
+            mostrar = st.checkbox("Editar", key=f"edit_{ejercicio_id}")
 
-    # Toggle para mostrar campos
-    mostrar = st.checkbox("Editar", key=f"edit_{ejercicio_id}")
+            if mostrar:
+                col1, col2 = st.columns(2)
+                with col1:
+                    e["peso_alcanzado"] = st.text_input("", value=e.get("peso_alcanzado", ""), placeholder="Peso Alcanzado", key=f"peso_{ejercicio_id}", label_visibility="collapsed")
+                with col2:
+                    e["rir"] = st.text_input("", value=e.get("rir", ""), placeholder="RIR", key=f"rir_{ejercicio_id}", label_visibility="collapsed")
 
-    if mostrar:
-        col1, col2 = st.columns(2)
-        with col1:
-            e["peso_alcanzado"] = st.text_input(
-                "", value=e.get("peso_alcanzado", ""), placeholder="Peso Alcanzado", key=f"peso_{ejercicio_id}",
-                label_visibility="collapsed"
-            )
-        with col2:
-            e["rir"] = st.text_input(
-                "", value=e.get("rir", ""), placeholder="RIR", key=f"rir_{ejercicio_id}",
-                label_visibility="collapsed"
-            )
-        e["comentario"] = st.text_input(
-            "", value=e.get("comentario", ""), placeholder="Comentario", key=f"coment_{ejercicio_id}",
-            label_visibility="collapsed"
-        )
+                e["comentario"] = st.text_input("", value=e.get("comentario", ""), placeholder="Comentario", key=f"coment_{ejercicio_id}", label_visibility="collapsed")
 
-    if e.get("video"):
-        st.video(e["video"])
-
-
+            if e.get("video"):
+                st.video(e["video"])
 
     # === GUARDAR CAMBIOS DEL DÍA ===
     if st.button("💾 Guardar cambios del día"):
