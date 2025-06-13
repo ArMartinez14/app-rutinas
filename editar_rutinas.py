@@ -22,7 +22,7 @@ def editar_rutinas():
     correo_normalizado = correo.replace("@", "_").replace(".", "_").lower()
 
     # === Obtener semanas disponibles ===
-    docs = db.collection("rutinas") \
+    docs = db.collection("rutinas_semanales") \
         .where("correo", "==", correo) \
         .stream()
 
@@ -39,7 +39,7 @@ def editar_rutinas():
         return
 
     # === Obtener ejercicios de esa semana ===
-    docs = db.collection("rutinas") \
+    docs = db.collection("rutinas_semanales") \
         .where("correo", "==", correo) \
         .where("fecha_lunes", "==", semana_sel) \
         .stream()
@@ -97,7 +97,7 @@ def editar_rutinas():
             dia_original = cambio["dia"]
             circuito_original = cambio["circuito"]
 
-            futuros = db.collection("rutinas") \
+            futuros = db.collection("rutinas_semanales") \
                 .where("correo", "==", correo) \
                 .where("dia", "==", dia_original) \
                 .where("ejercicio", "==", nombre_original) \
@@ -109,7 +109,7 @@ def editar_rutinas():
                 try:
                     fecha_doc = datetime.strptime(data.get("fecha_lunes", ""), "%Y-%m-%d")
                     if fecha_doc >= fecha_sel:
-                        db.collection("rutinas").document(doc.id).update({
+                        db.collection("rutinas_semanales").document(doc.id).update({
                             "ejercicio": cambio["ejercicio"],
                             "series": cambio["series"],
                             "reps": cambio["reps"],
