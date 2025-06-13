@@ -92,7 +92,7 @@ def ver_rutinas():
     st.markdown("""
         <style>
         .compact-input input {
-            font-size: 12px !important;
+            font-size: 15px !important;
             width: 100px !important;
         }
         
