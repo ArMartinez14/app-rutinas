@@ -97,4 +97,11 @@ def editar_rutinas():
             except:
                 pass
 
-        st.success(f"Cambiado exitosamente en {total_actualizados} semana(s) futuras.")
+        st.success(f"✅ Cambiado exitosamente en {total_actualizados} semana(s) (incluyendo la actual si corresponde).")
+        st.info(f"🗓️ Semana modificada: {semana_sel}")
+
+        # Recargar documento actualizado para reflejar cambios en pantalla
+        if semana_sel in semanas_dict:
+            doc_data = db.collection("rutinas_semanales").document(semanas_dict[semana_sel]).get().to_dict()
+            rutina = doc_data.get("rutina", {})
+            dia_rutina = rutina.get(dia_sel, [])
