@@ -54,7 +54,11 @@ def ver_rutinas():
     datos_usuario = doc_user.to_dict()
     nombre = datos_usuario.get("nombre", "Usuario")
     rol = datos_usuario.get("rol", "desconocido")
-    st.success(f"Bienvenido {nombre} ({rol})")
+
+    # Mostrar u ocultar datos personales
+    mostrar_info = st.checkbox("👤 Mostrar información personal", value=True)
+    if mostrar_info:
+        st.success(f"Bienvenido {nombre} ({rol})")
 
     # === CARGAR RUTINAS (caché) ===
     rutinas = cargar_rutinas_filtradas(correo, rol)
@@ -95,7 +99,12 @@ def ver_rutinas():
             font-size: 12px !important;
             width: 100px !important;
         }
-
+        .bloque {
+            padding: 10px;
+            border-radius: 12px;
+            background-color: #f5f5f5;
+            margin-bottom: 8px;
+        }
         .linea-blanca {
             border-bottom: 2px solid white;
             margin: 15px 0;
@@ -116,9 +125,9 @@ def ver_rutinas():
 
     for circuito, lista in sorted(ejercicios_por_circuito.items()):
         if circuito == "A":
-            st.subheader("Warm-Up")
+            st.subheader("🏁 Warm-Up")
         elif circuito == "D":
-            st.subheader("Workout")
+            st.subheader("🔥 Workout")
 
         st.markdown(f"### Circuito {circuito}")
         st.markdown("<div class='bloque'>", unsafe_allow_html=True)
