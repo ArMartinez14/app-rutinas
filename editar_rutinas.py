@@ -51,11 +51,11 @@ def editar_rutinas():
     cols = st.columns([3, 1, 2, 2, 1])
     cols[0].markdown("**Ejercicio**")
     cols[1].markdown("**Series**")
-    cols[2].markdown("**Reps**")
+    cols[2].markdown("**Repeticiones**")
     cols[3].markdown("**Peso**")
     cols[4].markdown("**RIR**")
 
-    ejercicios_editables = []
+    st.markdown("**Descripción y Comentario**")
     dia_rutina = rutina.get(dia_sel, [])
 
     for idx, ejercicio in enumerate(dia_rutina):
@@ -63,9 +63,14 @@ def editar_rutinas():
         ejercicio_editado = ejercicio.copy()
         ejercicio_editado["ejercicio"] = col1.text_input("", value=ejercicio.get("ejercicio", ""), key=f"ej_{idx}_nombre")
         ejercicio_editado["series"] = col2.number_input("", value=int(ejercicio.get("series", 0)), key=f"ej_{idx}_series")
-        ejercicio_editado["repeticiones"] = int(col3.text_input("", value=str(ejercicio.get("repeticiones", ejercicio.get("reps", ""))), key=f"ej_{idx}_reps")) if col3.text_input("", value=str(ejercicio.get("repeticiones", ejercicio.get("reps", ""))), key=f"ej_{idx}_reps") else None
+        reps_input = col3.text_input("", value=str(ejercicio.get("repeticiones", ejercicio.get("reps", ""))), key=f"ej_{idx}_reps")
+        ejercicio_editado["repeticiones"] = int(reps_input) if reps_input else None
         ejercicio_editado["peso"] = col4.text_input("", value=str(ejercicio.get("peso", "")), key=f"ej_{idx}_peso") or None
         ejercicio_editado["rir"] = col5.text_input("", value=ejercicio.get("rir", ""), key=f"ej_{idx}_rir") or None
+
+        col6, col7 = st.columns([2, 3])
+        ejercicio_editado["descripcion"] = col6.text_input("Descripción", value=ejercicio.get("descripcion", ""), key=f"ej_{idx}_descripcion")
+        ejercicio_editado["comentario"] = col7.text_input("Comentario", value=ejercicio.get("comentario", ""), key=f"ej_{idx}_comentario")
         ejercicios_editables.append(ejercicio_editado)
 
     if st.button("✅ Aplicar cambios a este día y futuras semanas", key=f"btn_guardar_cambios_{dia_sel}"):
