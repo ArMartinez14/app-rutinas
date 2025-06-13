@@ -98,17 +98,15 @@ def ver_rutinas():
         detalles = f"{series}x{reps}" if series and reps else ""
         detalles += f" · {peso}kg" if peso else ""
 
-        # Clave única por ejercicio
         ejercicio_id = f"{circuito}_{ejercicio}_{idx}".lower().replace(" ", "_").replace("(", "").replace(")", "")
 
-    # Mostrar encabezado como botón
-    if f"mostrar_inputs_{ejercicio_id}" not in st.session_state:
-        st.session_state[f"mostrar_inputs_{ejercicio_id}"] = False
+        # Mostrar encabezado bonito
+    st.markdown(f"**{circuito} - {ejercicio}** {detalles}")
 
-    if st.button(f"**{circuito} - {ejercicio}** {detalles}", key=f"btn_{ejercicio_id}"):
-        st.session_state[f"mostrar_inputs_{ejercicio_id}"] = not st.session_state[f"mostrar_inputs_{ejercicio_id}"]
+    # Toggle para mostrar campos
+    mostrar = st.checkbox("Editar", key=f"edit_{ejercicio_id}")
 
-    if st.session_state[f"mostrar_inputs_{ejercicio_id}"]:
+    if mostrar:
         col1, col2 = st.columns(2)
         with col1:
             e["peso_alcanzado"] = st.text_input(
