@@ -93,7 +93,7 @@ def ver_rutinas():
         <style>
         .compact-input input {
             font-size: 12px !important;
-            width: 100px !important;
+            width: 50px !important;
         }
         </style>
     """, unsafe_allow_html=True)
