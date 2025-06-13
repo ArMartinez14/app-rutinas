@@ -112,6 +112,8 @@ def ver_rutinas():
         circuito = e.get("circuito", "Z").upper()
         ejercicios_por_circuito.setdefault(circuito, []).append(e)
 
+    mostrar_circuitos = {}
+
     for circuito, lista in sorted(ejercicios_por_circuito.items()):
         if circuito == "A":
             st.subheader("🏁 Warm-Up")
@@ -119,9 +121,11 @@ def ver_rutinas():
             st.subheader("🔥 Workout")
 
         st.markdown(f"### Circuito {circuito}")
-        mostrar = st.checkbox(f"Editar circuito {circuito}", key=f"edit_circuito_{circuito}")
 
         st.markdown("<div class='bloque'>", unsafe_allow_html=True)
+        mostrar = st.checkbox(f"Editar circuito {circuito}", key=f"edit_circuito_{circuito}")
+        mostrar_circuitos[circuito] = mostrar
+
         for idx, e in enumerate(lista):
             ejercicio = e.get("ejercicio", f"Ejercicio {idx+1}")
             series = e.get("series", "")
@@ -147,6 +151,7 @@ def ver_rutinas():
 
             if e.get("video"):
                 st.video(e["video"])
+
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("<div class='separador'></div>", unsafe_allow_html=True)
 
