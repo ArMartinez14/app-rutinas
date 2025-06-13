@@ -88,8 +88,8 @@ def editar_rutinas():
             fecha_doc_str = data.get("fecha_lunes", "")
             try:
                 fecha_doc = datetime.strptime(fecha_doc_str, "%Y-%m-%d")
-                if fecha_doc >= fecha_sel:
-                    rutina_futura = data.get("rutina", {})
+                if fecha_doc == fecha_sel or fecha_doc > fecha_sel:
+                    rutina_futura = doc.to_dict().get("rutina", {})
                     if dia_sel in rutina_futura:
                         rutina_futura[dia_sel] = ejercicios_editables
                         db.collection("rutinas_semanales").document(doc.id).update({"rutina": rutina_futura})
