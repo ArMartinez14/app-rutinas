@@ -52,7 +52,10 @@ def editar_rutinas():
             ejercicios_por_dia[dia] = []
         ejercicios_por_dia[dia].append((doc.id, data))
 
-    dias_disponibles = sorted(ejercicios_por_dia.keys(), key=lambda x: int(x))
+    try:
+        dias_disponibles = sorted(ejercicios_por_dia.keys(), key=lambda x: int(x))
+    except ValueError:
+        dias_disponibles = sorted(ejercicios_por_dia.keys())
     dia_sel = st.selectbox("Selecciona el día a editar:", dias_disponibles, format_func=lambda x: f"Día {x}")
     if not dia_sel:
         return
