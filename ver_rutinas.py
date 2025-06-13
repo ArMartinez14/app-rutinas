@@ -105,13 +105,12 @@ def ver_rutinas():
             mostrar = st.checkbox("Editar", key=f"edit_{ejercicio_id}")
 
             if mostrar:
-                col1, col2 = st.columns(2)
+                col1, col2 = st.columns([3, 1])
                 with col1:
                     e["peso_alcanzado"] = st.text_input("", value=e.get("peso_alcanzado", ""), placeholder="Peso Alcanzado", key=f"peso_{ejercicio_id}", label_visibility="collapsed")
+                    e["comentario"] = st.text_input("", value=e.get("comentario", ""), placeholder="Comentario", key=f"coment_{ejercicio_id}", label_visibility="collapsed")
                 with col2:
                     e["rir"] = st.text_input("", value=e.get("rir", ""), placeholder="RIR", key=f"rir_{ejercicio_id}", label_visibility="collapsed")
-
-                e["comentario"] = st.text_input("", value=e.get("comentario", ""), placeholder="Comentario", key=f"coment_{ejercicio_id}", label_visibility="collapsed")
 
             if e.get("video"):
                 st.video(e["video"])
