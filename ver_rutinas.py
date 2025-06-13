@@ -102,7 +102,7 @@ def ver_rutinas():
             margin-bottom: 8px;
         }
         .separador {
-            height: 20px;
+            height: 10px;
         }
         </style>
     """, unsafe_allow_html=True)
