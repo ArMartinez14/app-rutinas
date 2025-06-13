@@ -89,6 +89,15 @@ def ver_rutinas():
     st.markdown(f"### Ejercicios del día {dia_sel}")
 
     # === MOSTRAR Y EDITAR EJERCICIOS ===
+    st.markdown("""
+        <style>
+        .compact-input input {
+            font-size: 12px !important;
+            width: 100px !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     for idx, e in enumerate(ejercicios):
         circuito = e.get("circuito", "Z").upper()
         ejercicio = e.get("ejercicio", f"Ejercicio {idx+1}")
@@ -107,14 +116,13 @@ def ver_rutinas():
             if mostrar:
                 col1, col2 = st.columns([3, 1])
                 with col1:
-                    st.markdown("<div style='font-size:8px;'>", unsafe_allow_html=True)
                     e["peso_alcanzado"] = st.text_input("", value=e.get("peso_alcanzado", ""), placeholder="Peso", key=f"peso_{ejercicio_id}", label_visibility="collapsed")
+                    st.markdown("<div class='compact-input'></div>", unsafe_allow_html=True)
                     e["comentario"] = st.text_input("", value=e.get("comentario", ""), placeholder="Comentario", key=f"coment_{ejercicio_id}", label_visibility="collapsed")
-                    st.markdown("</div>", unsafe_allow_html=True)
+                    st.markdown("<div class='compact-input'></div>", unsafe_allow_html=True)
                 with col2:
-                    st.markdown("<div style='font-size:8px;'>", unsafe_allow_html=True)
                     e["rir"] = st.text_input("", value=e.get("rir", ""), placeholder="RIR", key=f"rir_{ejercicio_id}", label_visibility="collapsed")
-                    st.markdown("</div>", unsafe_allow_html=True)
+                    st.markdown("<div class='compact-input'></div>", unsafe_allow_html=True)
 
             if e.get("video"):
                 st.video(e["video"])
