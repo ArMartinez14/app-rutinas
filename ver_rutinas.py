@@ -95,12 +95,7 @@ def ver_rutinas():
             font-size: 12px !important;
             width: 100px !important;
         }
-        .bloque {
-            padding: 10px;
-            border-radius: 12px;
-            background-color: #f5f5f5;
-            margin-bottom: 8px;
-        }
+
         .linea-blanca {
             border-bottom: 2px solid white;
             margin: 15px 0;
