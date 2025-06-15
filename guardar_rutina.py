@@ -30,25 +30,25 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
 
                 for ejercicio in ejercicios:
                     if not ejercicio.get("Ejercicio", "").strip():
-                        continue  # 🔒 Omitir si el ejercicio está vacío
+                        continue  # Saltar vacío
 
                     ejercicio_mod = ejercicio.copy()
 
-                    # === APLICAR PROGRESIONES ===
-                    for variable_objetivo in ["peso", "repeticiones", "rir", "tiempo", "velocidad"]:
+                    # === Aplicar progresiones con mayúsculas coherentes ===
+                    for variable_objetivo in ["Peso", "Repeticiones", "RIR", "Tiempo", "Velocidad"]:
                         valor_original = ejercicio.get(variable_objetivo, "")
                         if not valor_original:
                             continue
 
                         valor_actual = valor_original
 
-                        for n in range(1, 6):
+                        for n in range(1, 4):  # Solo 1 a 3
                             var = ejercicio.get(f"progresion_{n}_variable", "").strip().lower()
                             cantidad = ejercicio.get(f"progresion_{n}_cantidad", "")
                             operacion = ejercicio.get(f"progresion_{n}_operacion", "").strip().lower()
                             semanas_txt = ejercicio.get(f"progresion_{n}_semanas", "")
 
-                            if var != variable_objetivo or not cantidad or not operacion:
+                            if var != variable_objetivo.lower() or not cantidad or not operacion:
                                 continue
 
                             try:
@@ -71,15 +71,14 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
                         "peso": ejercicio_mod.get("Peso", ""),
                         "tiempo": ejercicio_mod.get("Tiempo", ""),
                         "velocidad": ejercicio_mod.get("Velocidad", ""),
-                        "rir": ejercicio_mod.get("Rir", ""),
+                        "rir": ejercicio_mod.get("RIR", ""),
                         "tipo": ejercicio_mod.get("Tipo", ""),
                         "video": ejercicio_mod.get("Video", "")
                     })
 
-                if lista_ejercicios:  # ✅ Solo guardar el día si hay ejercicios válidos
+                if lista_ejercicios:
                     rutina_semana["rutina"][numero_dia] = lista_ejercicios
 
-            # === GUARDAR SEMANA COMPLETA SOLO SI HAY DÍAS VÁLIDOS ===
             if rutina_semana["rutina"]:
                 doc_id = f"{correo_norm}_{fecha_norm}"
                 db.collection("rutinas_semanales").document(doc_id).set(rutina_semana)
