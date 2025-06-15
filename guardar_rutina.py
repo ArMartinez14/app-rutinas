@@ -83,7 +83,7 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
                 db.collection("rutinas_semanales").document(doc_id).set(rutina_semana)
 
         st.success(f"✅ Rutina generada correctamente para {semanas} semanas.")
-        st.experimental_rerun()  # 🚀 Fuerza recarga de la app
+        st.rerun()  # 🚀 Fuerza recarga de la app
 
     except Exception as e:
         st.error(f"❌ Error al guardar la rutina: {e}")
