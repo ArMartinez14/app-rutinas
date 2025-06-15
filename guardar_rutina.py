@@ -30,11 +30,10 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
 
                 for ejercicio in ejercicios:
                     if not ejercicio.get("Ejercicio", "").strip():
-                        continue  # Saltar vacío
+                        continue
 
                     ejercicio_mod = ejercicio.copy()
 
-                    # === Aplicar progresiones con mayúsculas coherentes ===
                     for variable_objetivo in ["Peso", "Repeticiones", "RIR", "Tiempo", "Velocidad"]:
                         valor_original = ejercicio.get(variable_objetivo, "")
                         if not valor_original:
@@ -42,7 +41,7 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
 
                         valor_actual = valor_original
 
-                        for n in range(1, 4):  # Solo 1 a 3
+                        for n in range(1, 4):
                             var = ejercicio.get(f"progresion_{n}_variable", "").strip().lower()
                             cantidad = ejercicio.get(f"progresion_{n}_cantidad", "")
                             operacion = ejercicio.get(f"progresion_{n}_operacion", "").strip().lower()
@@ -84,6 +83,7 @@ def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):
                 db.collection("rutinas_semanales").document(doc_id).set(rutina_semana)
 
         st.success(f"✅ Rutina generada correctamente para {semanas} semanas.")
+        st.experimental_rerun()  # 🚀 Fuerza recarga de la app
 
     except Exception as e:
         st.error(f"❌ Error al guardar la rutina: {e}")
