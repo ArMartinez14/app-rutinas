@@ -147,9 +147,12 @@ def ver_rutinas():
         doc_id = f"{correo_norm}_{fecha_norm}"
 
         try:
-            db.collection("rutinas_semanales").document(doc_id).update({
-                f"rutina.{dia_sel}": ejercicios
-            })
+            # === GUARDAR CAMBIOS CON .set(merge=True) ===
+            db.collection("rutinas_semanales").document(doc_id).set(
+                {f"rutina.{dia_sel}": ejercicios},
+                merge=True
+            )
+
             st.success("✅ Día actualizado correctamente.")
 
             semanas_futuras = sorted([s for s in semanas if s > semana_sel])
