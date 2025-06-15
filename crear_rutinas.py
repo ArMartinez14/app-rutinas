@@ -143,6 +143,10 @@ def crear_rutinas():
 
     # === NUEVO: Botón para previsualizar ===
     if st.button("🔍 Previsualizar rutina"):
+        st.session_state["mostrar_preview"] = True
+
+    # === Mostrar previsualización si corresponde ===
+    if st.session_state.get("mostrar_preview", False):
         st.subheader("📅 Previsualización de todas las semanas con progresiones aplicadas")
 
         for semana_idx in range(1, int(semanas) + 1):
@@ -179,9 +183,15 @@ def crear_rutinas():
                                     except:
                                         semanas_aplicar = []
 
+                                    # ✅ Validar cantidad como float seguro
+                                    try:
+                                        cantidad_float = float(cantidad)
+                                    except (ValueError, TypeError):
+                                        cantidad_float = 0
+
                                     for s in range(2, semana_idx + 1):
                                         if s in semanas_aplicar:
-                                            valor_actual = aplicar_progresion(valor_actual, float(cantidad), operacion)
+                                            valor_actual = aplicar_progresion(valor_actual, cantidad_float, operacion)
                                     ejercicio_mod[variable.capitalize()] = valor_actual
 
                         tabla.append({
@@ -200,5 +210,6 @@ def crear_rutinas():
                     st.dataframe(tabla, use_container_width=True)
 
     # === Botón final para guardar ===
-    if st.button("Generar rutina completa"):
+    if st.button("✅ Generar rutina completa"):
         guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias)
+        st.success("✅ Rutina guardada correctamente.")
