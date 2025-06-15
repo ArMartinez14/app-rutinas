@@ -105,7 +105,6 @@ def crear_rutinas():
                     label_visibility="collapsed", placeholder="Tipo"
                 )
 
-                # === CORREGIDO: nombres coherentes ===
                 for p in range(1, 4):
                     if progresion_activa == f"Progresión {p}":
                         fila[f"progresion_{p}_variable"] = cols[9].selectbox(
@@ -141,6 +140,15 @@ def crear_rutinas():
                         )
 
     st.markdown("---")
+
+    # === NUEVO: PREVISUALIZACIÓN ===
+    st.subheader("🔍 Previsualización de la rutina (sin aplicar progresión)")
+    for i, dia_nombre in enumerate(dias):
+        dia_key = f"rutina_dia_{i + 1}"
+        ejercicios = st.session_state.get(dia_key, [])
+        if ejercicios:
+            st.write(f"**{dia_nombre}**")
+            st.dataframe(ejercicios, use_container_width=True)
+
     if st.button("Generar rutina completa"):
         guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias)
-        
