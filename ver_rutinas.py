@@ -6,6 +6,7 @@ import json
 from utils import actualizar_progresiones_individual
 
 def ver_rutinas():
+    # === INICIALIZAR FIREBASE SOLO UNA VEZ ===
     if not firebase_admin._apps:
         cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
         with open("/tmp/firebase.json", "w") as f:
@@ -15,6 +16,7 @@ def ver_rutinas():
 
     db = firestore.client()
 
+    # === Funciones utilitarias ===
     def obtener_fecha_lunes():
         hoy = datetime.now()
         lunes = hoy - timedelta(days=hoy.weekday())
@@ -43,10 +45,11 @@ def ver_rutinas():
     if not correo_input:
         st.stop()
 
-    correo_raw = correo_input.strip()      # original para Firestore
-    correo = correo_raw.lower()            # para queries
-    correo_norm = normalizar_correo(correo_raw)  # para IDs
+    correo_raw = correo_input.strip()
+    correo = correo_raw.lower()
+    correo_norm = normalizar_correo(correo_raw)
 
+    # === Verificar usuario ===
     doc_user = db.collection("usuarios").document(correo).get()
     if not doc_user.exists:
         st.error("❌ Este correo no está registrado.")
@@ -60,6 +63,7 @@ def ver_rutinas():
     if mostrar_info:
         st.success(f"Bienvenido {nombre} ({rol})")
 
+    # === Cargar rutinas ===
     rutinas = cargar_rutinas_filtradas(correo, rol)
     if not rutinas:
         st.warning("⚠️ No se encontraron rutinas.")
@@ -101,14 +105,17 @@ def ver_rutinas():
         </style>
     """, unsafe_allow_html=True)
 
+    # === FOR para mostrar y modificar la lista DIRECTAMENTE ===
     ejercicios_por_circuito = {}
     for e in ejercicios:
         circuito = e.get("circuito", "Z").upper()
         ejercicios_por_circuito.setdefault(circuito, []).append(e)
 
     for circuito, lista in sorted(ejercicios_por_circuito.items()):
-        if circuito == "A": st.subheader("Warm-Up")
-        elif circuito == "D": st.subheader("Workout")
+        if circuito == "A":
+            st.subheader("Warm-Up")
+        elif circuito == "D":
+            st.subheader("Workout")
 
         st.markdown(f"### Circuito {circuito}")
         st.markdown("<div class='bloque'>", unsafe_allow_html=True)
@@ -141,50 +148,23 @@ def ver_rutinas():
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("<div class='linea-blanca'></div>", unsafe_allow_html=True)
 
-    # === BOTÓN GUARDAR CAMBIOS DEL DÍA (Infalible) ===
+    # === BOTÓN GUARDAR ===
     if st.button("💾 Guardar cambios del día", key=f"guardar_{dia_sel}_{semana_sel}"):
         fecha_norm = semana_sel.replace("-", "_")
         doc_id = f"{correo_norm}_{fecha_norm}"
 
         try:
-            # === 1️⃣ Lee SIEMPRE el doc real desde Firestore ===
-            doc_ref = db.collection("rutinas_semanales").document(doc_id)
-            doc = doc_ref.get()
-            if not doc.exists:
-                st.error(f"❌ Documento {doc_id} no existe en 'rutinas_semanales'.")
-                st.stop()
+            # 🚨 Usa la lista local modificada
+            db.collection("rutinas_semanales").document(doc_id).update({ f"rutina.{dia_sel}": ejercicios })
+            st.success("✅ Día actualizado correctamente.")
 
-            data = doc.to_dict()
-            rutina = data.get("rutina", {})
-
-            # === 2️⃣ Forzar dia_sel a string ===
-            dia_sel = str(dia_sel)
-
-            ejercicios_reales = rutina.get(dia_sel, [])
-
-            if not ejercicios_reales:
-                st.warning(f"⚠️ No hay ejercicios guardados para día {dia_sel}.")
-                st.stop()
-
-            # === 3️⃣ Modifica SOLO peso_alcanzado, rir y comentario ===
-            for idx, e in enumerate(ejercicios_reales):
-                e["peso_alcanzado"] = st.session_state.get(f"peso_alcanzado_{idx}", "")
-                e["rir"] = st.session_state.get(f"rir_{idx}", "")
-                e["comentario"] = st.session_state.get(f"comentario_{idx}", "")
-
-            # === 4️⃣ Guarda SOLO el día modificado ===
-            doc_ref.update({f"rutina.{dia_sel}": ejercicios_reales})
-
-            st.success("✅ Día actualizado correctamente (con Firestore REAL).")
-
-            # === 5️⃣ Detecta semanas futuras ===
+            # === Progresión y delta ===
             semanas_futuras = sorted([s for s in semanas if s > semana_sel])
 
-            # === 6️⃣ Aplica progresión individual y delta ===
-            for e in ejercicios_reales:
+            for e in ejercicios:
                 if e.get("peso_alcanzado"):
                     actualizar_progresiones_individual(
-                        nombre=data.get("cliente", ""),
+                        nombre=rutina_doc.get("cliente", ""),
                         correo=correo_raw,
                         ejercicio=e["ejercicio"],
                         circuito=e.get("circuito", ""),
@@ -211,15 +191,14 @@ def ver_rutinas():
                             peso_base += delta
                             fecha_norm_futura = s.replace("-", "_")
                             doc_id_futuro = f"{correo_norm}_{fecha_norm_futura}"
-                            doc_ref_futuro = db.collection("rutinas_semanales").document(doc_id_futuro)
-                            doc_futuro = doc_ref_futuro.get()
+                            doc_ref = db.collection("rutinas_semanales").document(doc_id_futuro)
+                            doc = doc_ref.get()
 
-                            if doc_futuro.exists:
-                                data_fut = doc_futuro.to_dict()
-                                rutina_fut = data_fut.get("rutina", {})
-                                ejercicios_fut = rutina_fut.get(dia_sel, [])
+                            if doc.exists:
+                                rutina_futura = doc.to_dict().get("rutina", {})
+                                ejercicios_futuros = rutina_futura.get(dia_sel, [])
 
-                                for ef in ejercicios_fut:
+                                for ef in ejercicios_futuros:
                                     if (
                                         ef.get("ejercicio") == nombre_ejercicio and
                                         ef.get("circuito") == circuito and
@@ -227,7 +206,7 @@ def ver_rutinas():
                                     ):
                                         ef["peso"] = round(peso_base, 2)
 
-                                doc_ref_futuro.update({f"rutina.{dia_sel}": ejercicios_fut})
+                                doc_ref.update({ f"rutina.{dia_sel}": ejercicios_futuros })
 
                     except Exception as inner_error:
                         st.warning(f"⚠️ Error aplicando delta: {inner_error}")
