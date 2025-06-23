@@ -20,11 +20,6 @@ if 'correo_usuario' not in st.session_state:
 
 st.session_state['correo_usuario'] = st.text_input("📧 Ingresa tu correo para continuar:", st.session_state['correo_usuario'])
 
-if st.session_state['correo_usuario'] == '':
-    st.warning("Por favor ingresa tu correo para acceder a todas las funciones.")
-    st.stop()
-
-
 # === INICIALIZAR FIREBASE desde Secrets ===
 if not firebase_admin._apps:
     # Lee el secreto como cadena JSON y convierte a dict
