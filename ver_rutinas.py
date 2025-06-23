@@ -41,13 +41,13 @@ def ver_rutinas():
         return [doc.to_dict() for doc in docs]
 
     # === INPUT CORREO ===
-    #correo_input = st.text_input("🔑 Ingresa tu correo:", key="correo_input")
-    #if not correo_input:
-    #    st.stop()
+    correo_input = st.text_input("🔑 Ingresa tu correo:", key="correo_input")
+    if not correo_input:
+        st.stop()
 
-    #correo_raw = correo_input.strip()
-    #correo = correo_raw.lower()
-    #correo_norm = normalizar_correo(correo_raw)
+    correo_raw = correo_input.strip()
+    correo = correo_raw.lower()
+    correo_norm = normalizar_correo(correo_raw)
 
     # === Verificar usuario ===
     doc_user = db.collection("usuarios").document(correo).get()
