@@ -3,10 +3,10 @@ import streamlit as st
 # ⚡️ 1) SIEMPRE primero:
 st.set_page_config(page_title="Momentum", layout="wide")
 
-from ver_rutinas import ver_rutinas
+from vista_rutinas import ver_rutinas
 from borrar_rutinas import borrar_rutinas
 from ingresar_cliente_view import ingresar_cliente_o_video
-from crear_rutinas import crear_rutinas
+from crear_planificaciones import crear_rutinas
 
 import firebase_admin
 from firebase_admin import credentials, firestore, initialize_app
