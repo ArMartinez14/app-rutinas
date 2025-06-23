@@ -64,6 +64,7 @@ if not st.session_state.correo:
 # === 2️⃣ Deportista: va directo a ver rutina ===
 if st.session_state.rol == "deportista":
     ver_rutinas()
+    ver_rutinas(st.session_state.correo, st.session_state.rol)
     st.stop()
 
 # === 3️⃣ Menu para admin/entrenador ===
@@ -89,6 +90,7 @@ if opcion == "Inicio":
         """, unsafe_allow_html=True)
 elif opcion == "Ver Rutinas":
     ver_rutinas()
+    ver_rutinas(st.session_state.correo, st.session_state.rol)
 elif opcion == "Ingresar Deportista o Video":
     ingresar_cliente_o_video()
 elif opcion == "Borrar Rutinas":
