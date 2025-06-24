@@ -27,22 +27,48 @@ def crear_rutinas():
     ))
 
     nombre_rutina_base = st.selectbox("Selecciona cliente con rutina:", [""] + nombres_rutinas)
+    dias_opciones = ["Todos los días"] + ["Día 1", "Día 2", "Día 3", "Día 4", "Día 5"]
+    dia_base_elegido = st.selectbox("¿Qué día quieres cargar de la rutina base?", dias_opciones)
 
     if st.button("📥 Cargar esta rutina como base"):
         if nombre_rutina_base:
             doc_ref = db.collection("rutinas_semanales").where("cliente", "==", nombre_rutina_base).limit(1).get()
             if doc_ref:
                 rutina_base = doc_ref[0].to_dict()
-                dias = ["Día 1", "Día 2", "Día 3", "Día 4", "Día 5"]
                 columnas_tabla = [
                     "Circuito", "Sección", "Ejercicio", "Series", "Repeticiones",
                     "Peso", "Tiempo", "Velocidad", "RIR", "Tipo"
                 ]
-
                 rutina_dict = rutina_base.get("rutina", {})
-                for i in range(1, 6):
-                    dia_key = f"rutina_dia_{i}"
-                    ejercicios_raw = rutina_dict.get(str(i), [])
+
+                if dia_base_elegido == "Todos los días":
+                    for i in range(1, 6):
+                        dia_key = f"rutina_dia_{i}"
+                        ejercicios_raw = rutina_dict.get(str(i), [])
+                        ejercicios_normalizados = []
+                        if ejercicios_raw:
+                            for ex in ejercicios_raw:
+                                ejercicios_normalizados.append({
+                                    "Circuito": ex.get("circuito", "A"),
+                                    "Sección": ex.get("bloque", "Warm Up"),
+                                    "Ejercicio": ex.get("ejercicio", ""),
+                                    "Series": ex.get("series", ""),
+                                    "Repeticiones": ex.get("repeticiones", ""),
+                                    "Peso": ex.get("peso", ""),
+                                    "Tiempo": ex.get("tiempo", ""),
+                                    "Velocidad": ex.get("velocidad", ""),
+                                    "RIR": ex.get("rir", ""),
+                                    "Tipo": ex.get("tipo", ""),
+                                })
+                        else:
+                            ejercicios_normalizados = [{k: "" for k in columnas_tabla} for _ in range(8)]
+                        st.session_state[dia_key] = ejercicios_normalizados
+
+                else:
+                    # Solo un día específico:
+                    dia_num = int(dia_base_elegido.split()[-1])  # Extrae el número del texto "Día X"
+                    dia_key = f"rutina_dia_{dia_num}"
+                    ejercicios_raw = rutina_dict.get(str(dia_num), [])
                     ejercicios_normalizados = []
                     if ejercicios_raw:
                         for ex in ejercicios_raw:
@@ -60,16 +86,13 @@ def crear_rutinas():
                             })
                     else:
                         ejercicios_normalizados = [{k: "" for k in columnas_tabla} for _ in range(8)]
-
                     st.session_state[dia_key] = ejercicios_normalizados
 
                 st.session_state["nombre_sel"] = rutina_base.get("cliente", "")
                 st.session_state["correo_sel"] = rutina_base.get("correo", "")
+                st.success(f"✅ Rutina de {nombre_rutina_base} cargada: {dia_base_elegido.lower()}.")
 
-                st.success(f"✅ Rutina de {nombre_rutina_base} cargada como base.")
-                st.rerun()  # 🚀 FIX para refrescar todo y aplicar cambios
-            else:
-                st.warning("No se encontró la rutina seleccionada.")
+
 
     st.markdown("---")
 
