@@ -7,16 +7,15 @@ from utils import actualizar_progresiones_individual
 
 
 def ver_rutinas():
-    # === INICIALIZAR FIREBASE SOLO UNA VEZ solo una===
+    # === INICIALIZAR FIREBASE SOLO UNA VEZ ===
     if not firebase_admin._apps:
-        # ✅ Cargar credenciales desde el Secret de Streamlit
         cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
         cred = credentials.Certificate(cred_dict)
         firebase_admin.initialize_app(cred)
 
     db = firestore.client()
 
-    # === Función utilidades ===
+    # === Funciones utilitarias ===
     def normalizar_correo(correo):
         return correo.strip().lower().replace("@", "_").replace(".", "_")
 
@@ -40,18 +39,17 @@ def ver_rutinas():
             docs = db.collection("rutinas_semanales").where("correo", "==", correo).stream()
         return [doc.to_dict() for doc in docs]
 
-    # === 1️⃣ OBTENER CORREO y ROL desde session_state ===
+    # === 1️⃣ OBTENER CORREO y ROL ===
     correo_raw = st.session_state.get("correo", "").strip().lower()
     if not correo_raw:
-        st.error("❌ No hay correo registrado. Por favor vuelve a iniciar sesión.")
+        st.error("❌ No hay correo registrado.")
         st.stop()
 
     correo_norm = normalizar_correo(correo_raw)
 
-    # ✅ CORREGIDO: usar correo RAW para buscar en usuarios
-    doc_user = db.collection("usuarios").document(correo_raw).get()
+    doc_user = db.collection("usuarios").document(correo_norm).get()
     if not doc_user.exists:
-        st.error(f"❌ No se encontró el usuario con ID '{correo_raw}'. Contacta a soporte.")
+        st.error(f"❌ No se encontró el usuario '{correo_norm}'")
         st.stop()
 
     datos_usuario = doc_user.to_dict()
@@ -59,46 +57,35 @@ def ver_rutinas():
     rol = datos_usuario.get("rol", "desconocido")
     rol = st.session_state.get("rol", rol)
 
-    # === 2️⃣ MOSTRAR INFO USUARIO ===
     mostrar_info = st.checkbox("👤 Mostrar información personal", value=True)
     if mostrar_info:
         st.success(f"Bienvenido {nombre} ({rol})")
 
-    # === 3️⃣ CARGAR RUTINAS FILTRADAS ===
+    # === 3️⃣ CARGAR RUTINAS ===
     rutinas = cargar_rutinas_filtradas(correo_raw, rol)
     if not rutinas:
         st.warning("⚠️ No se encontraron rutinas.")
         st.stop()
 
-    # === 4️⃣ FILTRO CLIENTE Y SEMANA ===
+    # === 4️⃣ FILTROS ===
     if es_entrenador(rol):
         clientes = sorted(set(r["cliente"] for r in rutinas if "cliente" in r))
-        cliente_input = st.text_input("👤 Escribe el nombre del cliente:", key="cliente_input")
+        cliente_input = st.text_input("👤 Buscar cliente:", key="cliente_input")
         cliente_opciones = [c for c in clientes if cliente_input.lower() in c.lower()]
-        cliente_sel = st.selectbox(
-            "Selecciona cliente:",
-            cliente_opciones if cliente_opciones else clientes,
-            key="cliente_sel"
-        )
+        cliente_sel = st.selectbox("Selecciona cliente:", cliente_opciones if cliente_opciones else clientes, key="cliente_sel")
         rutinas_cliente = [r for r in rutinas if r.get("cliente") == cliente_sel]
     else:
         rutinas_cliente = rutinas
 
     semanas = sorted({r["fecha_lunes"] for r in rutinas_cliente}, reverse=True)
     semana_actual = obtener_fecha_lunes()
-    semana_sel = st.selectbox(
-        "📆 Semana",
-        semanas,
-        index=semanas.index(semana_actual) if semana_actual in semanas else 0,
-        key="semana_sel"
-    )
+    semana_sel = st.selectbox("📆 Semana", semanas, index=semanas.index(semana_actual) if semana_actual in semanas else 0, key="semana_sel")
 
     rutina_doc = next((r for r in rutinas_cliente if r["fecha_lunes"] == semana_sel), None)
     if not rutina_doc:
         st.warning("⚠️ No hay rutina para esa semana.")
         st.stop()
 
-    # === 5️⃣ SELECCIONAR DÍA ===
     dias_disponibles = sorted(rutina_doc["rutina"].keys(), key=int)
     dia_sel = st.selectbox("📅 Día", dias_disponibles, key="dia_sel")
 
@@ -107,7 +94,6 @@ def ver_rutinas():
 
     st.markdown(f"### Ejercicios del día {dia_sel}")
 
-    # === 6️⃣ ESTILOS ===
     st.markdown("""
         <style>
         .compact-input input { font-size: 12px !important; width: 100px !important; }
@@ -116,7 +102,6 @@ def ver_rutinas():
         </style>
     """, unsafe_allow_html=True)
 
-    # === 7️⃣ MOSTRAR EJERCICIOS POR CIRCUITO ===
     ejercicios_por_circuito = {}
     for e in ejercicios:
         circuito = e.get("circuito", "Z").upper()
@@ -148,28 +133,10 @@ def ver_rutinas():
             if mostrar:
                 col1, col2 = st.columns([3, 1])
                 with col1:
-                    e["peso_alcanzado"] = st.text_input(
-                        "",
-                        value=e.get("peso_alcanzado", ""),
-                        placeholder="Peso",
-                        key=f"peso_{ejercicio_id}",
-                        label_visibility="collapsed"
-                    )
-                    e["comentario"] = st.text_input(
-                        "",
-                        value=e.get("comentario", ""),
-                        placeholder="Comentario",
-                        key=f"coment_{ejercicio_id}",
-                        label_visibility="collapsed"
-                    )
+                    e["peso_alcanzado"] = st.text_input("", value=e.get("peso_alcanzado", ""), placeholder="Peso", key=f"peso_{ejercicio_id}", label_visibility="collapsed")
+                    e["comentario"] = st.text_input("", value=e.get("comentario", ""), placeholder="Comentario", key=f"coment_{ejercicio_id}", label_visibility="collapsed")
                 with col2:
-                    e["rir"] = st.text_input(
-                        "",
-                        value=e.get("rir", ""),
-                        placeholder="RIR",
-                        key=f"rir_{ejercicio_id}",
-                        label_visibility="collapsed"
-                    )
+                    e["rir"] = st.text_input("", value=e.get("rir", ""), placeholder="RIR", key=f"rir_{ejercicio_id}", label_visibility="collapsed")
 
             if e.get("video"):
                 st.video(e["video"])
@@ -177,93 +144,64 @@ def ver_rutinas():
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("<div class='linea-blanca'></div>", unsafe_allow_html=True)
 
-    # === 8️⃣ BOTÓN GUARDAR CAMBIOS CORREGIDO ===
     if st.button("💾 Guardar cambios del día", key=f"guardar_{dia_sel}_{semana_sel}"):
         fecha_norm = semana_sel.replace("-", "_")
         doc_id = f"{correo_norm}_{fecha_norm}"
 
-    try:
-        # 1️⃣ RECOGER NUEVOS VALORES desde Streamlit inputs
-        ejercicios_actualizados = []
-        for e in ejercicios:
-            ejercicio_id = f"{e.get('circuito','')}_{e.get('ejercicio','')}_{ejercicios.index(e)}".lower().replace(" ", "_").replace("(", "").replace(")", "").replace("/", "")
-            peso_key = f"peso_{ejercicio_id}"
-            rir_key = f"rir_{ejercicio_id}"
-            coment_key = f"coment_{ejercicio_id}"
+        try:
+            db.collection("rutinas_semanales").document(doc_id).update({ f"rutina.{dia_sel}": ejercicios })
+            st.success("✅ Día actualizado correctamente.")
 
-            nuevo_peso = st.session_state.get(peso_key, e.get("peso_alcanzado", ""))
-            nuevo_rir = st.session_state.get(rir_key, e.get("rir", ""))
-            nuevo_coment = st.session_state.get(coment_key, e.get("comentario", ""))
+            semanas_futuras = sorted([s for s in semanas if s > semana_sel])
 
-            e["peso_alcanzado"] = nuevo_peso
-            e["rir"] = nuevo_rir
-            e["comentario"] = nuevo_coment
+            for e in ejercicios:
+                if e.get("peso_alcanzado"):
+                    actualizar_progresiones_individual(
+                        nombre=rutina_doc.get("cliente", ""),
+                        correo=correo_raw,
+                        ejercicio=e["ejercicio"],
+                        circuito=e.get("circuito", ""),
+                        bloque=e.get("bloque", e.get("seccion", "")),
+                        fecha_actual_lunes=semana_sel,
+                        dia_numero=int(dia_sel),
+                        peso_alcanzado=float(e["peso_alcanzado"])
+                    )
 
-            ejercicios_actualizados.append(e)
+                    try:
+                        peso_alcanzado = float(e["peso_alcanzado"])
+                        peso_actual = float(e.get("peso", 0))
+                        delta = peso_alcanzado - peso_actual
 
-        # 2️⃣ Actualiza Firestore con la rutina del día editada
-        db.collection("rutinas_semanales").document(doc_id).update({
-            f"rutina.{dia_sel}": ejercicios_actualizados
-        })
-        st.success("✅ Día actualizado correctamente.")
+                        if delta == 0:
+                            continue
 
-        # 3️⃣ Aplicar progresión y actualización en semanas futuras
-        semanas_futuras = sorted([s for s in semanas if s > semana_sel])
+                        nombre_ejercicio = e["ejercicio"]
+                        circuito = e.get("circuito", "")
+                        bloque = e.get("bloque", e.get("seccion", ""))
 
-        for e in ejercicios_actualizados:
-            if e.get("peso_alcanzado"):
-                # Actualiza tabla de progresión individual
-                actualizar_progresiones_individual(
-                    nombre=rutina_doc.get("cliente", ""),
-                    correo=correo_raw,
-                    ejercicio=e["ejercicio"],
-                    circuito=e.get("circuito", ""),
-                    bloque=e.get("bloque", e.get("seccion", "")),
-                    fecha_actual_lunes=semana_sel,
-                    dia_numero=int(dia_sel),
-                    peso_alcanzado=float(e["peso_alcanzado"])
-                )
+                        peso_base = peso_actual
 
-                try:
-                    peso_alcanzado = float(e["peso_alcanzado"])
-                    peso_actual = float(e.get("peso", 0))
-                    delta = peso_alcanzado - peso_actual
+                        for s in semanas_futuras:
+                            peso_base += delta
+                            fecha_norm_futura = s.replace("-", "_")
+                            doc_id_futuro = f"{correo_norm}_{fecha_norm_futura}"
 
-                    if delta == 0:
-                        continue
+                            doc_ref = db.collection("rutinas_semanales").document(doc_id_futuro)
+                            doc = doc_ref.get()
 
-                    nombre_ejercicio = e["ejercicio"]
-                    circuito = e.get("circuito", "")
-                    bloque = e.get("bloque", e.get("seccion", ""))
+                            if doc.exists:
+                                rutina_futura = doc.to_dict().get("rutina", {})
+                                ejercicios_futuros = rutina_futura.get(dia_sel, [])
 
-                    peso_base = peso_actual
+                                for ef in ejercicios_futuros:
+                                    if ef.get("ejercicio") == nombre_ejercicio and ef.get("circuito") == circuito and (ef.get("bloque") == bloque or ef.get("seccion") == bloque):
+                                        ef["peso"] = round(peso_base, 2)
 
-                    for s in semanas_futuras:
-                        peso_base += delta
+                                doc_ref.update({ f"rutina.{dia_sel}": ejercicios_futuros })
 
-                        fecha_norm_futura = s.replace("-", "_")
-                        doc_id_futuro = f"{correo_norm}_{fecha_norm_futura}"
+                    except Exception as inner_error:
+                        st.warning(f"⚠️ Error aplicando delta: {inner_error}")
 
-                        doc_ref = db.collection("rutinas_semanales").document(doc_id_futuro)
-                        doc = doc_ref.get()
-
-                        if doc.exists:
-                            rutina_futura = doc.to_dict().get("rutina", {})
-                            ejercicios_futuros = rutina_futura.get(dia_sel, [])
-
-                            for ef in ejercicios_futuros:
-                                if (
-                                    ef.get("ejercicio") == nombre_ejercicio and
-                                    ef.get("circuito") == circuito and
-                                    (ef.get("bloque") == bloque or ef.get("seccion") == bloque)
-                                ):
-                                    ef["peso"] = round(peso_base, 2)
-
-                            doc_ref.update({ f"rutina.{dia_sel}": ejercicios_futuros })
-
-                except Exception as inner_error:
-                    st.warning(f"⚠️ Error aplicando delta: {inner_error}")
-
-    except Exception as error:
-        st.error("❌ Error al guardar.")
-        st.exception(error)
+        except Exception as error:
+            st.error("❌ Error al guardar.")
+            st.exception(error)
