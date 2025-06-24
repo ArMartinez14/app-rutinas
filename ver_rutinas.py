@@ -176,7 +176,6 @@ def ver_rutinas():
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("<div class='linea-blanca'></div>", unsafe_allow_html=True)
 
-    # === 8️⃣ BOTÓN GUARDAR CAMBIOS ===
             # === 8️⃣ BOTÓN GUARDAR CAMBIOS ===
     if st.button("💾 Guardar cambios del día", key=f"guardar_{dia_sel}_{semana_sel}"):
         fecha_norm = semana_sel.replace("-", "_")
@@ -247,4 +246,3 @@ def ver_rutinas():
         except Exception as error:
             st.error("❌ Error al guardar.")
             st.exception(error)
-
