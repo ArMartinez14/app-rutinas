@@ -1,7 +1,7 @@
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
-import menu  # si #tienes un archivo para la barra lateral, usa este import
+import menu  # si tienes un archivo para la barra lateral, usa este import
 import ver_rutinas
 import crear_rutinas
 import editar_rutinas
