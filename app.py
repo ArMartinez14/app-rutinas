@@ -1,7 +1,7 @@
 import streamlit as st
 
 # ⚡️ 1) Configuración de página
-st.set_page_config(page_title="Momentum", layout="wide")
+st.set_page_config(page_title="Rutinas Motion", layout="wide")
 
 from ver_rutinas import ver_rutinas
 from borrar_rutinas import borrar_rutinas
@@ -28,7 +28,7 @@ if "rol" not in st.session_state:
 
 # === 1️⃣ LOGIN obligatorio ===
 if not st.session_state.correo:
-    st.title("Bienvenido a Momentum")
+    st.title("Bienvenido a Rutinas Motion")
     correo_input = st.text_input("Por favor, ingresa tu correo:")
 
     if correo_input:
