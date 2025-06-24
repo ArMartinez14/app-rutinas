@@ -32,19 +32,19 @@ def app(correo_raw, rol):
         return orden.get(ejercicio.get("circuito", ""), 99)
 
     @st.cache_data
-    def cargar_rutinas_filtradas(correo, rol):
+    def cargar_rutinas_filtradas(correo_raw, rol):
         if es_entrenador(rol):
             docs = db.collection("rutinas_semanales").stream()
         else:
-            docs = db.collection("rutinas_semanales").where("correo", "==", correo).stream()
+            docs = db.collection("rutinas_semanales").where("correo", "==", correo_raw).stream()
         return [doc.to_dict() for doc in docs]
 
-    correo = correo_raw.strip().lower()
-    correo_norm = normalizar_correo(correo)
+    # === Normaliza correo para doc_id ===
+    correo_norm = normalizar_correo(correo_raw)
 
     mostrar_info = st.checkbox("👤 Mostrar información personal", value=True)
 
-    rutinas = cargar_rutinas_filtradas(correo, rol)
+    rutinas = cargar_rutinas_filtradas(correo_raw, rol)
     if not rutinas:
         st.warning("⚠️ No se encontraron rutinas.")
         st.stop()
@@ -136,11 +136,9 @@ def app(correo_raw, rol):
         doc_id = f"{correo_norm}_{fecha_norm}"
 
         try:
-            # Guardar tal como asesoría: SIN reconstruir nada
             db.collection("rutinas_semanales").document(doc_id).update({f"rutina.{dia_sel}": ejercicios})
             st.success("✅ Día actualizado correctamente.")
 
-            # Progresión idéntica
             semanas_futuras = sorted([s for s in semanas if s > semana_sel])
 
             for e in ejercicios:

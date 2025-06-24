@@ -20,7 +20,7 @@ st.title("📅 App de Rutinas")
 
 # === ✅ INICIALIZAR FIREBASE SOLO UNA VEZ ===
 if not firebase_admin._apps:
-    cred = credentials.Certificate("credenciales.json")  # Cambia por tu ruta si es necesario
+    cred = credentials.Certificate("credenciales.json")  # Cambia ruta si es necesario
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
