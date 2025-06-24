@@ -2,20 +2,17 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime, timedelta
-import json
 from utils import actualizar_progresiones_individual
 
-def app(correo_raw, rol):
-    # === Inicializar Firebase ===
+def ver_rutinas():
+    # === ✅ INICIALIZAR FIREBASE UNA SOLA VEZ ===
     if not firebase_admin._apps:
-        cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
-        with open("/tmp/firebase.json", "w") as f:
-            json.dump(cred_dict, f)
-        cred = credentials.Certificate("/tmp/firebase.json")
+        cred = credentials.Certificate("credenciales-firebase.json")
         firebase_admin.initialize_app(cred)
 
     db = firestore.client()
 
+    # === ✅ Funciones utilitarias ===
     def normalizar_correo(correo):
         return correo.strip().lower().replace("@", "_").replace(".", "_")
 
@@ -39,20 +36,43 @@ def app(correo_raw, rol):
             docs = db.collection("rutinas_semanales").where("correo", "==", correo_raw).stream()
         return [doc.to_dict() for doc in docs]
 
+    # === ✅ OBTENER CORREO Y ROL ===
+    correo_raw = st.session_state.get("correo", "").strip().lower()
+    if not correo_raw:
+        st.error("❌ No hay correo registrado. Por favor inicia sesión de nuevo.")
+        st.stop()
+
     correo_norm = normalizar_correo(correo_raw)
 
-    mostrar_info = st.checkbox("👤 Mostrar información personal", value=True)
+    doc_user = db.collection("usuarios").document(correo_norm).get()
+    if not doc_user.exists:
+        st.error(f"❌ Usuario '{correo_norm}' no encontrado.")
+        st.stop()
 
+    datos_usuario = doc_user.to_dict()
+    nombre = datos_usuario.get("nombre", "Usuario")
+    rol = st.session_state.get("rol", datos_usuario.get("rol", "desconocido"))
+
+    # === ✅ INFO USUARIO ===
+    mostrar_info = st.checkbox("👤 Mostrar información personal", value=True)
+    if mostrar_info:
+        st.success(f"Bienvenido {nombre} ({rol})")
+
+    # === ✅ CARGAR RUTINAS ===
     rutinas = cargar_rutinas_filtradas(correo_raw, rol)
     if not rutinas:
         st.warning("⚠️ No se encontraron rutinas.")
         st.stop()
 
-    if mostrar_info:
+    if es_entrenador(rol):
         clientes = sorted(set(r["cliente"] for r in rutinas if "cliente" in r))
         cliente_input = st.text_input("👤 Escribe el nombre del cliente:", key="cliente_input")
         cliente_opciones = [c for c in clientes if cliente_input.lower() in c.lower()]
-        cliente_sel = st.selectbox("Selecciona cliente:", cliente_opciones if cliente_opciones else clientes, key="cliente_sel")
+        cliente_sel = st.selectbox(
+            "Selecciona cliente:",
+            cliente_opciones if cliente_opciones else clientes,
+            key="cliente_sel"
+        )
         rutinas_cliente = [r for r in rutinas if r.get("cliente") == cliente_sel]
     else:
         rutinas_cliente = rutinas
@@ -129,18 +149,19 @@ def app(correo_raw, rol):
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("<div class='linea-blanca'></div>", unsafe_allow_html=True)
 
+    # === ✅ BOTÓN GUARDAR CAMBIOS CORRECTO ===
     if st.button("💾 Guardar cambios del día", key=f"guardar_{dia_sel}_{semana_sel}"):
         fecha_norm = semana_sel.replace("-", "_")
         doc_id = f"{correo_norm}_{fecha_norm}"
         doc_ref = db.collection("rutinas_semanales").document(doc_id)
 
         try:
-            # Leer toda la rutina
+            # 1️⃣ Leer toda la rutina actual
             rutina_entera = doc_ref.get().to_dict() or {}
             rutina_data = rutina_entera.get("rutina", {})
             rutina_data[str(int(dia_sel))] = ejercicios
 
-            # Reescribir toda la estructura
+            # 2️⃣ Guardar toda la rutina de nuevo (como Asesoría)
             doc_ref.set({
                 "cliente": rutina_doc.get("cliente", ""),
                 "correo": correo_raw,
