@@ -1,6 +1,6 @@
 import streamlit as st
 
-# ⚡️ 1) SIEMPRE primero:
+# ⚡️ 1) Configuración de página
 st.set_page_config(page_title="Momentum", layout="wide")
 
 from ver_rutinas import ver_rutinas
@@ -10,18 +10,17 @@ from crear_rutinas import crear_rutinas
 
 import firebase_admin
 from firebase_admin import credentials, firestore, initialize_app
-import json   # 👈 importante para leer el secreto
+import json  # Para leer el secreto
 
 # === INICIALIZAR FIREBASE desde Secrets ===
 if not firebase_admin._apps:
-    # Lee el secreto como cadena JSON y convierte a dict
     cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
     cred = credentials.Certificate(cred_dict)
     initialize_app(cred)
 
 db = firestore.client()
 
-# === Estado ===
+# === Estado de sesión ===
 if "correo" not in st.session_state:
     st.session_state.correo = ""
 if "rol" not in st.session_state:
@@ -53,7 +52,7 @@ if st.session_state.rol == "deportista":
     ver_rutinas()
     st.stop()
 
-# === 3️⃣ Menu para admin/entrenador ===
+# === 3️⃣ Menú para admin/entrenador ===
 st.sidebar.title("Menú principal")
 
 opciones_menu = (
@@ -64,7 +63,9 @@ opciones_menu = (
     "Borrar Rutinas",
     "Editar Rutinas"
 )
-opcion = st.sidebar.radio("Selecciona una opción:", opciones_menu)
+
+# ✅ CORREGIDO: definir index para evitar AttributeError
+opcion = st.sidebar.radio("Selecciona una opción:", opciones_menu, index=0)
 
 if opcion == "Inicio":
     st.markdown("""
@@ -73,14 +74,19 @@ if opcion == "Inicio":
             <h1>Bienvenido a Momentum</h1>
             <p style='font-size:18px;'>Selecciona una opción del menú para comenzar</p>
         </div>
-        """, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
 elif opcion == "Ver Rutinas":
     ver_rutinas()
-elif opcion == "Ingresar Deportista o Video":
-    ingresar_cliente_o_video()
-elif opcion == "Borrar Rutinas":
-    borrar_rutinas()
+
 elif opcion == "Crear Rutinas":
     crear_rutinas()
+
+elif opcion == "Ingresar Deportista o Video":
+    ingresar_cliente_o_video()
+
+elif opcion == "Borrar Rutinas":
+    borrar_rutinas()
+
 elif opcion == "Editar Rutinas":
     st.write("Aquí iría el módulo de editar rutinas.")
