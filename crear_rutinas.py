@@ -17,13 +17,14 @@ db = firestore.client()
 def crear_rutinas():
     st.title("📝 Crear Nueva Rutina")
 
-    # === NUEVO: Seleccionar rutina base desde la colección 'rutinas_semanales' ===
+    # === 📋 Usar como base una rutina existente desde 'rutinas_semanales'
     st.markdown("---")
     st.subheader("📋 Usar como base una rutina existente")
 
-    # ⚡️ Buscar nombres de rutinas en 'rutinas_semanales'
     rutinas_docs = db.collection("rutinas_semanales").stream()
-    nombres_rutinas = sorted(set(doc.to_dict().get("cliente", "") for doc in rutinas_docs if doc.exists and doc.to_dict().get("cliente", "")))
+    nombres_rutinas = sorted(set(
+        doc.to_dict().get("cliente", "") for doc in rutinas_docs if doc.exists and doc.to_dict().get("cliente", "")
+    ))
 
     nombre_rutina_base = st.selectbox("Selecciona cliente con rutina:", [""] + nombres_rutinas)
 
@@ -38,14 +39,26 @@ def crear_rutinas():
                     "Peso", "Tiempo", "Velocidad", "RIR", "Tipo"
                 ]
 
-                # === ✅ Nueva forma de extraer desde el dict 'rutina'
                 rutina_dict = rutina_base.get("rutina", {})
-                for i in range(1, 6):  # días 1 a 5
+                for i in range(1, 6):
                     dia_key = f"rutina_dia_{i}"
-                    ejercicios = rutina_dict.get(str(i), [])  # claves son string: "1", "2", etc.
-                    st.session_state[dia_key] = ejercicios if ejercicios else [{k: "" for k in columnas_tabla} for _ in range(8)]
+                    ejercicios_raw = rutina_dict.get(str(i), [])
+                    ejercicios_normalizados = []
+                    for ex in ejercicios_raw:
+                        ejercicios_normalizados.append({
+                            "Circuito": ex.get("circuito", ""),
+                            "Sección": ex.get("bloque", ""),
+                            "Ejercicio": ex.get("ejercicio", ""),
+                            "Series": ex.get("series", ""),
+                            "Repeticiones": ex.get("repeticiones", ""),
+                            "Peso": ex.get("peso", ""),
+                            "Tiempo": ex.get("tiempo", ""),
+                            "Velocidad": ex.get("velocidad", ""),
+                            "RIR": ex.get("rir", ""),
+                            "Tipo": ex.get("tipo", ""),
+                        })
+                    st.session_state[dia_key] = ejercicios_normalizados if ejercicios_normalizados else [{k: "" for k in columnas_tabla} for _ in range(8)]
 
-                # Autocompletar nombre y correo
                 st.session_state["nombre_sel"] = rutina_base.get("cliente", "")
                 st.session_state["correo_sel"] = rutina_base.get("correo", "")
 
@@ -53,10 +66,9 @@ def crear_rutinas():
             else:
                 st.warning("No se encontró la rutina seleccionada.")
 
-
     st.markdown("---")
 
-    # === Cargar usuarios ===
+    # === Usuarios ===
     docs = db.collection("usuarios").stream()
     usuarios = [doc.to_dict() for doc in docs if doc.exists]
     nombres = sorted(set(u.get("nombre", "") for u in usuarios))
@@ -104,9 +116,13 @@ def crear_rutinas():
 
                 cols = st.columns(14)
                 fila["Circuito"] = cols[0].selectbox(
-                    "", ["A", "B", "C", "D", "E", "F", "G"],
-                    index=["A", "B", "C", "D", "E", "F", "G"].index(fila["Circuito"]) if fila["Circuito"] else 0,
-                    key=f"circ_{i}_{idx}", label_visibility="collapsed"
+                    "",
+                    ["A", "B", "C", "D", "E", "F", "G"],
+                    index=["A", "B", "C", "D", "E", "F", "G"].index(
+                        fila.get("Circuito", "A").upper()
+                    ) if fila.get("Circuito") else 0,
+                    key=f"circ_{i}_{idx}",
+                    label_visibility="collapsed"
                 )
 
                 fila["Sección"] = "Warm Up" if fila["Circuito"] in ["A", "B", "C"] else "Work Out"
