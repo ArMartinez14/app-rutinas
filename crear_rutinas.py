@@ -17,10 +17,11 @@ db = firestore.client()
 def crear_rutinas():
     st.title("📝 Crear Nueva Rutina")
 
-    # === NUEVO: Seleccionar rutina base ANTES de todo ===
+    # === NUEVO: Seleccionar rutina base desde la colección 'rutinas_semanales' ===
     st.markdown("---")
     st.subheader("📋 Usar como base una rutina existente")
 
+    # ⚡️ Buscar nombres de rutinas en 'rutinas_semanales'
     rutinas_docs = db.collection("rutinas_semanales").stream()
     nombres_rutinas = sorted(set(doc.to_dict().get("nombre", "") for doc in rutinas_docs if doc.exists and doc.to_dict().get("nombre", "")))
 
@@ -28,7 +29,8 @@ def crear_rutinas():
 
     if st.button("📥 Cargar esta rutina como base"):
         if nombre_rutina_base:
-            doc_ref = db.collection("rutinas").where("nombre", "==", nombre_rutina_base).limit(1).get()
+            # Buscar en la colección correcta
+            doc_ref = db.collection("rutinas_semanales").where("nombre", "==", nombre_rutina_base).limit(1).get()
             if doc_ref:
                 rutina_base = doc_ref[0].to_dict()
                 dias = ["Día 1", "Día 2", "Día 3", "Día 4", "Día 5"]
@@ -41,12 +43,13 @@ def crear_rutinas():
                     ejercicios = rutina_base.get(f"dia_{i + 1}", []) or rutina_base.get(f"dia{i + 1}", [])
                     st.session_state[dia_key] = ejercicios if ejercicios else [{k: "" for k in columnas_tabla} for _ in range(8)]
 
+                # Autocompletar nombre y correo
                 st.session_state["nombre_sel"] = rutina_base.get("nombre", "")
                 st.session_state["correo_sel"] = rutina_base.get("correo", "")
 
                 st.success(f"✅ Rutina de {nombre_rutina_base} cargada como base.")
             else:
-                st.warning("No se encontró la rutina seleccionada.")
+                st.warning("No se encontró la rutina seleccionada en 'rutinas_semanales'.")
 
     st.markdown("---")
 
@@ -138,7 +141,7 @@ def crear_rutinas():
                     label_visibility="collapsed", placeholder="Tipo"
                 )
 
-                for p in range(1, 3 + 1):
+                for p in range(1, 4):
                     if progresion_activa == f"Progresión {p}":
                         fila[f"progresion_{p}_variable"] = cols[9].selectbox(
                             "",
