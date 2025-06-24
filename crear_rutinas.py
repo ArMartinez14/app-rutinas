@@ -33,6 +33,35 @@ def crear_rutinas():
     semanas = st.number_input("Semanas de duración:", min_value=1, max_value=12, value=4)
     entrenador = st.text_input("Nombre del entrenador responsable:")
 
+    # === NUEVO: Seleccionar rutina base de otro cliente ===
+    st.markdown("---")
+    st.subheader("📋 Usar como base una rutina ya creada")
+
+    rutinas_docs = db.collection("rutinas").stream()
+    nombres_rutinas = sorted(set(doc.to_dict().get("nombre", "") for doc in rutinas_docs))
+
+    nombre_rutina_base = st.selectbox("Selecciona cliente con rutina:", nombres_rutinas)
+
+    if st.button("📥 Usar como base esta rutina"):
+        if nombre_rutina_base:
+            doc_ref = db.collection("rutinas").where("nombre", "==", nombre_rutina_base).limit(1).get()
+            if doc_ref:
+                rutina_base = doc_ref[0].to_dict()
+                dias = ["Día 1", "Día 2", "Día 3", "Día 4", "Día 5"]
+                columnas_tabla = [
+                    "Circuito", "Sección", "Ejercicio", "Series", "Repeticiones",
+                    "Peso", "Tiempo", "Velocidad", "RIR", "Tipo"
+                ]
+                for i, dia_nombre in enumerate(dias):
+                    dia_key = f"rutina_dia_{i + 1}"
+                    ejercicios = rutina_base.get(f"dia_{i + 1}", [])
+                    if not ejercicios:
+                        ejercicios = rutina_base.get(f"dia{i + 1}", [])  # compatibilidad
+                    st.session_state[dia_key] = ejercicios if ejercicios else [{k: "" for k in columnas_tabla} for _ in range(8)]
+                st.success(f"✅ Rutina de {nombre_rutina_base} cargada como base.")
+            else:
+                st.warning("No se encontró la rutina seleccionada.")
+
     st.markdown("---")
     st.subheader("Días de entrenamiento")
 
@@ -141,11 +170,9 @@ def crear_rutinas():
 
     st.markdown("---")
 
-    # === NUEVO: Botón para previsualizar ===
     if st.button("🔍 Previsualizar rutina"):
         st.session_state["mostrar_preview"] = True
 
-    # === Mostrar previsualización si corresponde ===
     if st.session_state.get("mostrar_preview", False):
         st.subheader("📅 Previsualización de todas las semanas con progresiones aplicadas")
 
@@ -163,11 +190,9 @@ def crear_rutinas():
                     for ejercicio in ejercicios:
                         ejercicio_mod = ejercicio.copy()
 
-                        # Determinar sección por circuito
                         circuito = ejercicio.get("Circuito", "")
                         ejercicio_mod["Sección"] = "Warm Up" if circuito in ["A", "B", "C"] else "Work Out"
 
-                        # === APLICAR PROGRESIONES ===
                         for p in range(1, 4):
                             variable = ejercicio.get(f"progresion_{p}_variable", "").strip().lower()
                             cantidad = ejercicio.get(f"progresion_{p}_cantidad", "")
@@ -182,8 +207,6 @@ def crear_rutinas():
                                         semanas_aplicar = [int(s.strip()) for s in semanas_txt.split(",") if s.strip().isdigit()]
                                     except:
                                         semanas_aplicar = []
-
-                                    # ✅ Validar cantidad como float seguro
                                     try:
                                         cantidad_float = float(cantidad)
                                     except (ValueError, TypeError):
@@ -209,7 +232,6 @@ def crear_rutinas():
 
                     st.dataframe(tabla, use_container_width=True)
 
-    # === Botón final para guardar ===
     if st.button("✅ Generar rutina completa"):
         guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias)
         st.success("✅ Rutina guardada correctamente.")
