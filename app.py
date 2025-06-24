@@ -1,70 +1,22 @@
+# app.py
 import streamlit as st
-import firebase_admin
-from firebase_admin import credentials, firestore
 
-import ver_rutinas
-import crear_rutinas
-import editar_rutinas
-import borrar_rutinas
-import evaluaciones
-import rutinas_admin
+st.set_page_config(page_title="App de Rutinas y Agenda", layout="wide")
 
-# === ✅ CONFIGURAR PÁGINA ===
-st.set_page_config(
-    page_title="📅 App de Rutinas",
-    page_icon="📅",
-    layout="wide"
-)
+st.title("🏠 App de Rutinas y Agenda")
 
-st.title("📅 App de Rutinas")
+# Inputs de login
+correo = st.text_input("✉️ Ingresa tu correo")
+rol = st.selectbox("Selecciona tu rol", ["deportista", "entrenador", "admin"])
 
-# === ✅ INICIALIZAR FIREBASE SOLO UNA VEZ ===
-if not firebase_admin._apps:
-    cred = credentials.Certificate("credenciales.json")  # Cambia ruta si es necesario
-    firebase_admin.initialize_app(cred)
+if st.button("Iniciar Sesión"):
+    st.session_state["correo"] = correo.strip()
+    st.session_state["rol"] = rol.strip()
+    st.success(f"✅ Sesión iniciada como {rol} — {correo}")
 
-db = firestore.client()
-
-# === ✅ PEDIR CORREO UNA SOLA VEZ ===
-correo_input = st.text_input("🔑 Ingresa tu correo:", key="correo_input")
-if not correo_input:
-    st.stop()
-
-correo = correo_input.strip().lower()
-
-# === ✅ VERIFICAR USUARIO ===
-doc_user = db.collection("usuarios").document(correo).get()
-if not doc_user.exists:
-    st.error("❌ Este correo no está registrado.")
-    st.stop()
-
-rol = doc_user.get("rol").lower()
-
-# === ✅ MOSTRAR OPCIONES SEGÚN ROL ===
-if rol in ["entrenador", "admin", "administrador"]:
-    opciones = [
-        "Ver Rutinas",
-        "Crear Rutinas",
-        "Editar Rutinas",
-        "Borrar Rutinas",
-        "Evaluaciones",
-        "Admin Rutinas"
-    ]
-else:
-    opciones = ["Ver Rutinas"]
-
-opcion = st.sidebar.selectbox("📌 Menú", opciones)
-
-# === ✅ MOSTRAR PÁGINAS SEGÚN SELECCIÓN ===
-if opcion == "Ver Rutinas":
-    ver_rutinas.app(correo, rol)
-elif opcion == "Crear Rutinas":
-    crear_rutinas.app()
-elif opcion == "Editar Rutinas":
-    editar_rutinas.app()
-elif opcion == "Borrar Rutinas":
-    borrar_rutinas.app()
-elif opcion == "Evaluaciones":
-    evaluaciones.app()
-elif opcion == "Admin Rutinas":
-    rutinas_admin.app()
+# Menú lateral igual en todas
+with st.sidebar:
+    st.markdown("📌 **Menú**")
+    st.page_link("app.py", label="🏠 Inicio")
+    st.page_link("pages/1_Crear_Rutinas.py", label="📝 Crear Rutinas")
+    st.page_link("pages/2_Ver_Rutinas.py", label="🔍 Ver Rutinas")
