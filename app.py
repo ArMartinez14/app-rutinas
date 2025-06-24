@@ -12,32 +12,30 @@ import firebase_admin
 from firebase_admin import credentials, firestore, initialize_app
 import json   # 👈 importante para leer el secreto
 
-# === INICIALIZAR FIREBASE desde Secrets ===
+# === ✅ Inicializar Firebase y definir db ===
 if not firebase_admin._apps:
-    # Lee el secreto como cadena JSON y convierte a dict
     cred_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
     cred = credentials.Certificate(cred_dict)
-    initialize_app(cred)
+    firebase_admin.initialize_app(cred)
 
-db = firestore.client()
+db = firestore.client()  # 👈 AHORA SÍ existe db
 
-# === Estado ===
+# === 1️⃣ LOGIN obligatorio ===
 if "correo" not in st.session_state:
     st.session_state.correo = ""
 if "rol" not in st.session_state:
     st.session_state.rol = ""
 
-# === 1️⃣ LOGIN obligatorio ===
 if not st.session_state.correo:
     st.title("Bienvenido a Momentum")
     correo_input = st.text_input("Por favor, ingresa tu correo:")
 
     if correo_input:
         with st.spinner("Verificando correo..."):
-            docs = db.collection("usuarios").where("correo", "==", correo_input).limit(1).get()
+            doc = db.collection("usuarios").document(correo_input).get()
             usuario = None
-            if docs:
-                usuario = docs[0].to_dict()
+            if doc.exists:
+                usuario = doc.to_dict()
 
         if usuario:
             st.session_state.correo = correo_input
@@ -53,7 +51,7 @@ if st.session_state.rol == "deportista":
     ver_rutinas()
     st.stop()
 
-# === 3️⃣ Menu para admin/entrenador ===
+# === 3️⃣ Menú para admin/entrenador ===
 st.sidebar.title("Menú principal")
 
 opciones_menu = (
