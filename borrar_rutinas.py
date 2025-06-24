@@ -19,7 +19,7 @@ def borrar_rutinas():
     if correo_input:
         correo_normalizado = correo_input.replace("@", "_").replace(".", "_").lower()
 
-        docs = db.collection("rutinas_semanales").stream()
+        docs = db.collection("rutinas").stream()
         semanas = {}
 
         for doc in docs:
@@ -47,5 +47,5 @@ def borrar_rutinas():
         if semanas_seleccionadas and st.button("🗑️ Eliminar semanas seleccionadas"):
             for semana in semanas_seleccionadas:
                 for doc_id in semanas[semana]:
-                    db.collection("rutinas_semanales").document(doc_id).delete()
+                    db.collection("rutinas").document(doc_id).delete()
             st.success("Se eliminaron las semanas seleccionadas correctamente.")

@@ -1,6 +1,6 @@
 from firebase_admin import firestore
 from datetime import timedelta
-from utils import aplicar_progresion, normalizar_texto
+from herramientas import aplicar_progresion, normalizar_texto
 import streamlit as st
 
 def guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias):

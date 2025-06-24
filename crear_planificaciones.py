@@ -2,8 +2,8 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
-from utils import aplicar_progresion
-from guardar_rutina import guardar_rutina
+from herramientas import aplicar_progresion
+from guardar_rutina_view import guardar_rutina
 import json
 
 # === INICIALIZAR FIREBASE SOLO UNA VEZ ===
@@ -158,4 +158,3 @@ def crear_rutinas():
             guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias)
         else:
             st.warning("⚠️ Completa nombre, correo y entrenador antes de guardar.")
-
