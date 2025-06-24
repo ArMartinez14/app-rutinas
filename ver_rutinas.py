@@ -131,71 +131,70 @@ def app(correo_raw, rol):
         fecha_norm = semana_sel.replace("-", "_")
         doc_id = f"{correo_norm}_{fecha_norm}"
 
-        try:
-            # ✅ Asegura que cada ejercicio tenga peso_alcanzado y se actualice
-            for idx, e in enumerate(ejercicios):
-                if "peso_alcanzado" not in e:
-                    e["peso_alcanzado"] = ""
-                e["peso_alcanzado"] = st.session_state.get(f"peso_alcanzado_{idx}", e["peso_alcanzado"])
-                e["rir"] = st.session_state.get(f"rir_{idx}", e.get("rir", ""))
-                e["comentario"] = st.session_state.get(f"comentario_{idx}", e.get("comentario", ""))
+    try:
+        # 🔑 1️⃣ NO hagas reconstrucción. Modifica la lista que ya tienes:
+        # (Lo haces indirectamente al usar los mismos keys en los inputs, así que aquí no hace falta reescribirlos uno por uno)
 
-            # ✅ Guarda lista directa
-            db.collection("rutinas_semanales").document(doc_id).update({f"rutina.{dia_sel}": ejercicios})
-            st.success("✅ Día actualizado correctamente.")
+        # 🔑 2️⃣ SUBE toda la lista tal cual está ahora
+        db.collection("rutinas_semanales").document(doc_id).update({f"rutina.{dia_sel}": ejercicios})
+        st.success("✅ Día actualizado correctamente.")
 
-            # ✅ Progresión automática
-            semanas_futuras = sorted([s for s in semanas if s > semana_sel])
+        # 🔑 3️⃣ PROGRESIÓN (igualita a asesoría)
+        semanas_futuras = sorted([s for s in semanas if s > semana_sel])
 
-            for e in ejercicios:
-                if e.get("peso_alcanzado"):
-                    actualizar_progresiones_individual(
-                        nombre=rutina_doc.get("cliente", ""),
-                        correo=correo_raw,
-                        ejercicio=e["ejercicio"],
-                        circuito=e.get("circuito", ""),
-                        bloque=e.get("bloque", e.get("seccion", "")),
-                        fecha_actual_lunes=semana_sel,
-                        dia_numero=int(dia_sel),
-                        peso_alcanzado=float(e["peso_alcanzado"])
-                    )
+        for e in ejercicios:
+            if e.get("peso_alcanzado"):
+                actualizar_progresiones_individual(
+                    nombre=rutina_doc.get("cliente", ""),
+                    correo=correo_raw,
+                    ejercicio=e["ejercicio"],
+                    circuito=e.get("circuito", ""),
+                    bloque=e.get("bloque", e.get("seccion", "")),
+                    fecha_actual_lunes=semana_sel,
+                    dia_numero=int(dia_sel),
+                    peso_alcanzado=float(e["peso_alcanzado"])
+                )
 
-                    try:
-                        peso_alcanzado = float(e["peso_alcanzado"])
-                        peso_actual = float(e.get("peso", 0))
-                        delta = peso_alcanzado - peso_actual
-                        if delta == 0:
-                            continue
+                try:
+                    peso_alcanzado = float(e["peso_alcanzado"])
+                    peso_actual = float(e.get("peso", 0))
+                    delta = peso_alcanzado - peso_actual
 
-                        nombre_ejercicio = e["ejercicio"]
-                        circuito = e.get("circuito", "")
-                        bloque = e.get("bloque", e.get("seccion", ""))
-                        peso_base = peso_actual
+                    if delta == 0:
+                        continue  # sin cambios
 
-                        for s in semanas_futuras:
-                            peso_base += delta
-                            fecha_norm_futura = s.replace("-", "_")
-                            doc_id_futuro = f"{correo_norm}_{fecha_norm_futura}"
-                            doc_ref = db.collection("rutinas_semanales").document(doc_id_futuro)
-                            doc = doc_ref.get()
+                    nombre_ejercicio = e["ejercicio"]
+                    circuito = e.get("circuito", "")
+                    bloque = e.get("bloque", e.get("seccion", ""))
 
-                            if doc.exists:
-                                rutina_fut = doc.to_dict().get("rutina", {})
-                                ejercicios_fut = rutina_fut.get(dia_sel, [])
+                    peso_base = peso_actual
 
-                                for ef in ejercicios_fut:
-                                    if (
-                                        ef.get("ejercicio") == nombre_ejercicio and
-                                        ef.get("circuito") == circuito and
-                                        (ef.get("bloque") == bloque or ef.get("seccion") == bloque)
-                                    ):
-                                        ef["peso"] = round(peso_base, 2)
+                    for s in semanas_futuras:
+                        peso_base += delta  # aplica delta acumulado
 
-                                doc_ref.update({f"rutina.{dia_sel}": ejercicios_fut})
+                        fecha_norm_futura = s.replace("-", "_")
+                        doc_id_futuro = f"{correo_norm}_{fecha_norm_futura}"
 
-                    except Exception as inner_error:
-                        st.warning(f"⚠️ Error aplicando delta: {inner_error}")
+                        doc_ref = db.collection("rutinas_semanales").document(doc_id_futuro)
+                        doc = doc_ref.get()
 
-        except Exception as error:
-            st.error("❌ Error al guardar.")
-            st.exception(error)
+                        if doc.exists:
+                            rutina_futura = doc.to_dict().get("rutina", {})
+                            ejercicios_futuros = rutina_futura.get(dia_sel, [])
+
+                            for ef in ejercicios_futuros:
+                                if (
+                                    ef.get("ejercicio") == nombre_ejercicio and
+                                    ef.get("circuito") == circuito and
+                                    (ef.get("bloque") == bloque or ef.get("seccion") == bloque)
+                                ):
+                                    ef["peso"] = round(peso_base, 2)
+
+                            doc_ref.update({f"rutina.{dia_sel}": ejercicios_futuros})
+
+                except Exception as inner_error:
+                    st.warning(f"⚠️ Error aplicando delta: {inner_error}")
+
+    except Exception as error:
+        st.error("❌ Error al guardar.")
+        st.exception(error)
