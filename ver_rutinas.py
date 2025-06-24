@@ -138,9 +138,10 @@ def app(correo_raw, rol):
         try:
             # ✅ Usa set + merge=True y clave numérica
             db.collection("rutinas_semanales").document(doc_id).set(
-                {"rutina": { int(dia_sel): ejercicios }},
+                {"rutina": { str(dia_sel): ejercicios }},
                 merge=True
             )
+
             st.success("✅ Día actualizado correctamente.")
 
             # Lo demás igual: aplicar progresión, etc.
