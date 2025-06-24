@@ -132,11 +132,19 @@ def app(correo_raw, rol):
         doc_id = f"{correo_norm}_{fecha_norm}"
 
         try:
-            # 1️⃣ Guarda semana actual usando la lista directa
+            # ✅ Asegura que cada ejercicio tenga peso_alcanzado y se actualice
+            for idx, e in enumerate(ejercicios):
+                if "peso_alcanzado" not in e:
+                    e["peso_alcanzado"] = ""
+                e["peso_alcanzado"] = st.session_state.get(f"peso_alcanzado_{idx}", e["peso_alcanzado"])
+                e["rir"] = st.session_state.get(f"rir_{idx}", e.get("rir", ""))
+                e["comentario"] = st.session_state.get(f"comentario_{idx}", e.get("comentario", ""))
+
+            # ✅ Guarda lista directa
             db.collection("rutinas_semanales").document(doc_id).update({f"rutina.{dia_sel}": ejercicios})
             st.success("✅ Día actualizado correctamente.")
 
-            # 2️⃣ Progresión igual que asesorías
+            # ✅ Progresión automática
             semanas_futuras = sorted([s for s in semanas if s > semana_sel])
 
             for e in ejercicios:
@@ -156,7 +164,6 @@ def app(correo_raw, rol):
                         peso_alcanzado = float(e["peso_alcanzado"])
                         peso_actual = float(e.get("peso", 0))
                         delta = peso_alcanzado - peso_actual
-
                         if delta == 0:
                             continue
 
@@ -169,7 +176,6 @@ def app(correo_raw, rol):
                             peso_base += delta
                             fecha_norm_futura = s.replace("-", "_")
                             doc_id_futuro = f"{correo_norm}_{fecha_norm_futura}"
-
                             doc_ref = db.collection("rutinas_semanales").document(doc_id_futuro)
                             doc = doc_ref.get()
 
