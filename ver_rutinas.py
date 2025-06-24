@@ -71,9 +71,12 @@ def app(correo_raw, rol):
 
     dias_disponibles = sorted(rutina_doc["rutina"].keys(), key=int)
     dia_sel = st.selectbox("📅 Día", dias_disponibles, key="dia_sel")
+    dia_sel = str(dia_sel)  # ✅ forzar string siempre
 
     ejercicios = rutina_doc["rutina"][dia_sel]
     ejercicios.sort(key=ordenar_circuito)
+
+    st.write("DEBUG:", rutina_doc["rutina"].keys(), "DIA_SEL:", dia_sel)  # 👀 debug visible
 
     st.markdown(f"### Ejercicios del día {dia_sel}")
 
@@ -130,7 +133,6 @@ def app(correo_raw, rol):
     if st.button(f"💾 Guardar cambios del día", key=f"guardar_{dia_sel}_{semana_sel}"):
         fecha_norm = semana_sel.replace("-", "_")
         doc_id = f"{correo_norm}_{fecha_norm}"
-
         try:
             doc_ref = db.collection("rutinas_semanales").document(doc_id)
             doc = doc_ref.get()
@@ -140,7 +142,7 @@ def app(correo_raw, rol):
 
             data = doc.to_dict()
             rutina = data.get("rutina", {})
-            dia_sel = str(dia_sel)
+            dia_sel = str(dia_sel)  # refuerzo
             ejercicios_originales = rutina.get(dia_sel, [])
 
             if not ejercicios_originales:
@@ -158,7 +160,7 @@ def app(correo_raw, rol):
                 ejercicios_actualizados.append(nuevo)
 
             doc_ref.set({f"rutina.{dia_sel}": ejercicios_actualizados}, merge=True)
-            st.success(f"✅ Día {dia_sel} actualizado: ahora todos tienen peso_alcanzado.")
+            st.success(f"✅ Día {dia_sel} actualizado: peso_alcanzado guardado.")
 
             semanas_futuras = sorted([s for s in semanas if s > semana_sel])
 
