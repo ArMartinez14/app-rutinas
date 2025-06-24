@@ -33,11 +33,11 @@ if not st.session_state.correo:
     correo_input = st.text_input("Por favor, ingresa tu correo:")
 
     if correo_input:
-        docs = db.collection("usuarios").where("correo", "==", correo_input).limit(1).stream()
-        usuario = None
-        for doc in docs:
-            usuario = doc.to_dict()
-            break
+        with st.spinner("Verificando correo..."):
+            docs = db.collection("usuarios").where("correo", "==", correo_input).limit(1).get()
+            usuario = None
+            if docs:
+                usuario = docs[0].to_dict()
 
         if usuario:
             st.session_state.correo = correo_input
