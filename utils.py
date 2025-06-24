@@ -39,7 +39,7 @@ def actualizar_progresiones_individual(nombre, correo, ejercicio, circuito, bloq
     doc_id_actual = f"{correo_id}_{fecha_actual_normal}_{dia_id}_{circuito_id}_{ejercicio_id}"
     doc_id_siguiente = f"{correo_id}_{fecha_siguiente_normal}_{dia_id}_{circuito_id}_{ejercicio_id}"
 
-    doc_actual = db.collection("rutinas").document(doc_id_actual).get()
+    doc_actual = db.collection("rutinas_semanales").document(doc_id_actual).get()
     if not doc_actual.exists:
         return
 
@@ -52,7 +52,7 @@ def actualizar_progresiones_individual(nombre, correo, ejercicio, circuito, bloq
     if diferencia == 0:
         return
 
-    doc_siguiente_ref = db.collection("rutinas").document(doc_id_siguiente)
+    doc_siguiente_ref = db.collection("rutinas_semanales").document(doc_id_siguiente)
     doc_siguiente = doc_siguiente_ref.get()
     if not doc_siguiente.exists:
         return
