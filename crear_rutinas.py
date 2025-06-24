@@ -15,34 +15,18 @@ if not firebase_admin._apps:
 db = firestore.client()
 
 def crear_rutinas():
-    st.title("Crear nueva rutina")
+    st.title("📝 Crear Nueva Rutina")
 
-    # === Cargar usuarios ===
-    docs = db.collection("usuarios").stream()
-    usuarios = [doc.to_dict() for doc in docs if doc.exists]
-    nombres = sorted(set(u.get("nombre", "") for u in usuarios))
-
-    nombre_input = st.text_input("Escribe el nombre del cliente:")
-    coincidencias = [n for n in nombres if nombre_input.lower() in n.lower()]
-    nombre_sel = st.selectbox("Selecciona de la lista:", coincidencias) if coincidencias else ""
-
-    correo_auto = next((u.get("correo", "") for u in usuarios if u.get("nombre") == nombre_sel), "")
-    correo = st.text_input("Correo del cliente:", value=correo_auto)
-
-    fecha_inicio = st.date_input("Fecha de inicio de rutina:", value=datetime.today())
-    semanas = st.number_input("Semanas de duración:", min_value=1, max_value=12, value=4)
-    entrenador = st.text_input("Nombre del entrenador responsable:")
-
-    # === NUEVO: Seleccionar rutina base de otro cliente ===
+    # === NUEVO: Seleccionar rutina base ANTES de todo ===
     st.markdown("---")
-    st.subheader("📋 Usar como base una rutina ya creada")
+    st.subheader("📋 Usar como base una rutina existente")
 
     rutinas_docs = db.collection("rutinas").stream()
-    nombres_rutinas = sorted(set(doc.to_dict().get("nombre", "") for doc in rutinas_docs))
+    nombres_rutinas = sorted(set(doc.to_dict().get("nombre", "") for doc in rutinas_docs if doc.exists and doc.to_dict().get("nombre", "")))
 
-    nombre_rutina_base = st.selectbox("Selecciona cliente con rutina:", nombres_rutinas)
+    nombre_rutina_base = st.selectbox("Selecciona cliente con rutina:", [""] + nombres_rutinas)
 
-    if st.button("📥 Usar como base esta rutina"):
+    if st.button("📥 Cargar esta rutina como base"):
         if nombre_rutina_base:
             doc_ref = db.collection("rutinas").where("nombre", "==", nombre_rutina_base).limit(1).get()
             if doc_ref:
@@ -54,16 +38,36 @@ def crear_rutinas():
                 ]
                 for i, dia_nombre in enumerate(dias):
                     dia_key = f"rutina_dia_{i + 1}"
-                    ejercicios = rutina_base.get(f"dia_{i + 1}", [])
-                    if not ejercicios:
-                        ejercicios = rutina_base.get(f"dia{i + 1}", [])  # compatibilidad
+                    ejercicios = rutina_base.get(f"dia_{i + 1}", []) or rutina_base.get(f"dia{i + 1}", [])
                     st.session_state[dia_key] = ejercicios if ejercicios else [{k: "" for k in columnas_tabla} for _ in range(8)]
+
+                st.session_state["nombre_sel"] = rutina_base.get("nombre", "")
+                st.session_state["correo_sel"] = rutina_base.get("correo", "")
+
                 st.success(f"✅ Rutina de {nombre_rutina_base} cargada como base.")
             else:
                 st.warning("No se encontró la rutina seleccionada.")
 
     st.markdown("---")
-    st.subheader("Días de entrenamiento")
+
+    # === Cargar usuarios ===
+    docs = db.collection("usuarios").stream()
+    usuarios = [doc.to_dict() for doc in docs if doc.exists]
+    nombres = sorted(set(u.get("nombre", "") for u in usuarios))
+
+    nombre_input = st.text_input("Escribe el nombre del cliente:", value=st.session_state.get("nombre_sel", ""))
+    coincidencias = [n for n in nombres if nombre_input.lower() in n.lower()]
+    nombre_sel = st.selectbox("Selecciona de la lista:", coincidencias) if coincidencias else ""
+
+    correo_auto = next((u.get("correo", "") for u in usuarios if u.get("nombre") == nombre_sel), "")
+    correo = st.text_input("Correo del cliente:", value=st.session_state.get("correo_sel", correo_auto))
+
+    fecha_inicio = st.date_input("Fecha de inicio de rutina:", value=datetime.today())
+    semanas = st.number_input("Semanas de duración:", min_value=1, max_value=12, value=4)
+    entrenador = st.text_input("Nombre del entrenador responsable:")
+
+    st.markdown("---")
+    st.subheader("📆 Días de entrenamiento")
 
     dias = ["Día 1", "Día 2", "Día 3", "Día 4", "Día 5"]
     tabs = st.tabs(dias)
@@ -134,7 +138,7 @@ def crear_rutinas():
                     label_visibility="collapsed", placeholder="Tipo"
                 )
 
-                for p in range(1, 4):
+                for p in range(1, 3 + 1):
                     if progresion_activa == f"Progresión {p}":
                         fila[f"progresion_{p}_variable"] = cols[9].selectbox(
                             "",
