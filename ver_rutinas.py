@@ -136,19 +136,19 @@ def app(correo_raw, rol):
         doc_id = f"{correo_norm}_{fecha_norm}"
 
         try:
-            # ✅ Usa set + merge=True y clave numérica
+            # === ✅ 1) Guarda semana actual con clave de día como STRING
             db.collection("rutinas_semanales").document(doc_id).set(
                 {"rutina": { str(dia_sel): ejercicios }},
                 merge=True
             )
-
             st.success("✅ Día actualizado correctamente.")
 
-            # Lo demás igual: aplicar progresión, etc.
+            # === ✅ 2) Detecta semanas futuras y aplica delta
             semanas_futuras = sorted([s for s in semanas if s > semana_sel])
 
             for e in ejercicios:
                 if e.get("peso_alcanzado"):
+                    # Actualiza progresión individual
                     actualizar_progresiones_individual(
                         nombre=rutina_doc.get("cliente", ""),
                         correo=correo_raw,
@@ -180,17 +180,25 @@ def app(correo_raw, rol):
                             doc = doc_ref.get()
                             if doc.exists:
                                 rutina_fut = doc.to_dict().get("rutina", {})
-                                ejercicios_fut = rutina_fut.get(str(int(dia_sel)), [])
+                                ejercicios_fut = rutina_fut.get(str(dia_sel), [])  # ✅ clave como STRING
+
                                 for ef in ejercicios_fut:
-                                    if (ef.get("ejercicio") == nombre_ejercicio and
+                                    if (
+                                        ef.get("ejercicio") == nombre_ejercicio and
                                         ef.get("circuito") == circuito and
-                                        (ef.get("bloque") == bloque or ef.get("seccion") == bloque)):
+                                        (ef.get("bloque") == bloque or ef.get("seccion") == bloque)
+                                    ):
                                         ef["peso"] = round(peso_base, 2)
-                                doc_ref.set({"rutina": { int(dia_sel): ejercicios_fut }}, merge=True)
+
+                                # ✅ clave de día como STRING también aquí
+                                doc_ref.set(
+                                    {"rutina": { str(dia_sel): ejercicios_fut }},
+                                    merge=True
+                                )
 
                     except Exception as inner_error:
                         st.warning(f"⚠️ Error aplicando delta: {inner_error}")
 
         except Exception as error:
-                st.error("❌ Error al guardar.")
-                st.exception(error)
+            st.error("❌ Error al guardar.")
+            st.exception(error)
