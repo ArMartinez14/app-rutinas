@@ -67,7 +67,7 @@ def crear_rutinas():
                 st.session_state["correo_sel"] = rutina_base.get("correo", "")
 
                 st.success(f"✅ Rutina de {nombre_rutina_base} cargada como base.")
-                st.experimental_rerun()  # 🚀 FIX para refrescar todo y aplicar cambios
+                st.rerun()  # 🚀 FIX para refrescar todo y aplicar cambios
             else:
                 st.warning("No se encontró la rutina seleccionada.")
 
