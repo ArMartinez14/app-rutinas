@@ -14,5 +14,4 @@ def mostrar_menu():
         ver_rutinas()
     elif opcion == "Crear Rutinas":
         crear_rutinas()
-    elif opcion == "Evaluaciones":
-        evaluacion()
+   
