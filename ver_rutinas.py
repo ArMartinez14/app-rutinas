@@ -71,12 +71,12 @@ def app(correo_raw, rol):
 
     dias_disponibles = sorted(rutina_doc["rutina"].keys(), key=int)
     dia_sel = st.selectbox("📅 Día", dias_disponibles, key="dia_sel")
-    dia_sel = str(dia_sel)  # ✅ forzar string siempre
+    dia_sel = str(dia_sel)
 
     ejercicios = rutina_doc["rutina"][dia_sel]
     ejercicios.sort(key=ordenar_circuito)
 
-    st.write("DEBUG:", rutina_doc["rutina"].keys(), "DIA_SEL:", dia_sel)  # 👀 debug visible
+    st.write("DEBUG:", rutina_doc["rutina"].keys(), "DIA_SEL:", dia_sel)
 
     st.markdown(f"### Ejercicios del día {dia_sel}")
 
@@ -133,86 +133,26 @@ def app(correo_raw, rol):
     if st.button(f"💾 Guardar cambios del día", key=f"guardar_{dia_sel}_{semana_sel}"):
         fecha_norm = semana_sel.replace("-", "_")
         doc_id = f"{correo_norm}_{fecha_norm}"
-        try:
-            doc_ref = db.collection("rutinas_semanales").document(doc_id)
-            doc = doc_ref.get()
-            if not doc.exists:
-                st.error(f"❌ No existe el doc {doc_id}")
-                st.stop()
+        doc_ref = db.collection("rutinas_semanales").document(doc_id)
 
-            data = doc.to_dict()
-            rutina = data.get("rutina", {})
-            dia_sel = str(dia_sel)  # refuerzo
-            ejercicios_originales = rutina.get(dia_sel, [])
+        # ⚡ Usa la misma rutina ya cargada
+        rutina = rutina_doc["rutina"]
+        dia_sel = str(dia_sel)
+        ejercicios_originales = rutina.get(dia_sel, [])
 
-            if not ejercicios_originales:
-                st.warning(f"⚠️ No hay ejercicios para día {dia_sel}.")
-                st.stop()
+        if not ejercicios_originales:
+            st.warning(f"⚠️ No hay ejercicios para día {dia_sel}.")
+            st.stop()
 
-            ejercicios_actualizados = []
-            for idx, e in enumerate(ejercicios_originales):
-                nuevo = e.copy()
-                if "peso_alcanzado" not in nuevo:
-                    nuevo["peso_alcanzado"] = ""
-                nuevo["peso_alcanzado"] = st.session_state.get(f"peso_alcanzado_{idx}", nuevo["peso_alcanzado"])
-                nuevo["rir"] = st.session_state.get(f"rir_{idx}", nuevo.get("rir", ""))
-                nuevo["comentario"] = st.session_state.get(f"comentario_{idx}", nuevo.get("comentario", ""))
-                ejercicios_actualizados.append(nuevo)
+        ejercicios_actualizados = []
+        for idx, e in enumerate(ejercicios_originales):
+            nuevo = e.copy()
+            if "peso_alcanzado" not in nuevo:
+                nuevo["peso_alcanzado"] = ""
+            nuevo["peso_alcanzado"] = st.session_state.get(f"peso_alcanzado_{idx}", nuevo["peso_alcanzado"])
+            nuevo["rir"] = st.session_state.get(f"rir_{idx}", nuevo.get("rir", ""))
+            nuevo["comentario"] = st.session_state.get(f"comentario_{idx}", nuevo.get("comentario", ""))
+            ejercicios_actualizados.append(nuevo)
 
-            doc_ref.set({f"rutina.{dia_sel}": ejercicios_actualizados}, merge=True)
-            st.success(f"✅ Día {dia_sel} actualizado: peso_alcanzado guardado.")
-
-            semanas_futuras = sorted([s for s in semanas if s > semana_sel])
-
-            for e in ejercicios_actualizados:
-                if e.get("peso_alcanzado"):
-                    actualizar_progresiones_individual(
-                        nombre=data.get("cliente", ""),
-                        correo=correo_raw,
-                        ejercicio=e["ejercicio"],
-                        circuito=e.get("circuito", ""),
-                        bloque=e.get("bloque", e.get("seccion", "")),
-                        fecha_actual_lunes=semana_sel,
-                        dia_numero=int(dia_sel),
-                        peso_alcanzado=float(e["peso_alcanzado"])
-                    )
-
-                    try:
-                        peso_alcanzado = float(e["peso_alcanzado"])
-                        peso_actual = float(e.get("peso", 0))
-                        delta = peso_alcanzado - peso_actual
-                        if delta == 0:
-                            continue
-
-                        nombre_ejercicio = e["ejercicio"]
-                        circuito = e.get("circuito", "")
-                        bloque = e.get("bloque", e.get("seccion", ""))
-                        peso_base = peso_actual
-
-                        for s in semanas_futuras:
-                            peso_base += delta
-                            fecha_norm_futura = s.replace("-", "_")
-                            doc_id_futuro = f"{correo_norm}_{fecha_norm_futura}"
-                            doc_ref_futuro = db.collection("rutinas_semanales").document(doc_id_futuro)
-                            doc_futuro = doc_ref_futuro.get()
-
-                            if doc_futuro.exists:
-                                rutina_fut = doc_futuro.to_dict().get("rutina", {})
-                                ejercicios_fut = rutina_fut.get(dia_sel, [])
-
-                                for ef in ejercicios_fut:
-                                    if (
-                                        ef.get("ejercicio") == nombre_ejercicio and
-                                        ef.get("circuito") == circuito and
-                                        (ef.get("bloque") == bloque or ef.get("seccion") == bloque)
-                                    ):
-                                        ef["peso"] = round(peso_base, 2)
-
-                                doc_ref_futuro.update({f"rutina.{dia_sel}": ejercicios_fut})
-
-                    except Exception as inner_error:
-                        st.warning(f"⚠️ Error aplicando delta: {inner_error}")
-
-        except Exception as error:
-            st.error("❌ Error guardando (Firestore).")
-            st.exception(error)
+        doc_ref.set({f"rutina.{dia_sel}": ejercicios_actualizados}, merge=True)
+        st.success(f"✅ Día {dia_sel} actualizado y guardado.")
