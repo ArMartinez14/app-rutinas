@@ -1,49 +1,65 @@
 import streamlit as st
-from ver_rutinas import ver_rutinas
-from crear_rutinas import crear_rutinas
-from evaluaciones import registrar_evaluacion
-from borrar_rutinas import borrar_rutinas  # 👈 IMPORTAR TU ARCHIVO
-from editar_rutinas import editar_rutinas
+import firebase_admin
+from firebase_admin import credentials, firestore
+import menu  # Tu archivo de navegación
+import ver_rutinas  # Tu página de ver rutinas
+import crear_rutinas
+import editar_rutinas
+import borrar_rutinas
+import evaluaciones
+import rutinas_admin
 
-st.set_page_config(page_title="Motion Center", layout="wide")
+# ✅ Inicializar Firebase (ajusta con tu credencial)
+if not firebase_admin._apps:
+    cred = credentials.Certificate("credenciales.json")
+    firebase_admin.initialize_app(cred)
+db = firestore.client()
 
-# Inicializar el estado de la sesión si no existe
-if 'opcion' not in st.session_state:
-    st.session_state.opcion = None
+# === CONFIG PÁGINA ===
+st.set_page_config(page_title="📅 App Rutinas", layout="wide")
 
-# Título del sidebar
-st.sidebar.title("Menú principal")
+st.title("📅 App de Rutinas")
 
-# Botones como menú lateral
-if st.sidebar.button("Ver Rutinas"):
-    st.session_state.opcion = "Ver Rutinas"
-if st.sidebar.button("Crear Rutinas"):
-    st.session_state.opcion = "Crear Rutinas"
-if st.sidebar.button("Evaluaciones"):
-    st.session_state.opcion = "Evaluaciones"
-if st.sidebar.button("Borrar Rutinas"):
-    st.session_state.opcion = "Borrar Rutinas"
-if st.sidebar.button("Editar Rutinas"):
-    st.session_state.opcion = "Editar Rutinas"
+# === 1️⃣ Pide correo al abrir ===
+correo_input = st.text_input("🔑 Ingresa tu correo:", key="correo_input")
+if not correo_input:
+    st.stop()
 
-# Mostrar la opción seleccionada o el mensaje de bienvenida
-if st.session_state.opcion:
-    if st.session_state.opcion == "Ver Rutinas":
-        ver_rutinas()
-    elif st.session_state.opcion == "Crear Rutinas":
-        crear_rutinas()
-    elif st.session_state.opcion == "Evaluaciones":
-        registrar_evaluacion()
-    elif st.session_state.opcion == "Borrar Rutinas":
-        borrar_rutinas()
-    elif st.session_state.opcion == "Editar Rutinas":
-        editar_rutinas()
+correo = correo_input.strip().lower()
+doc_user = db.collection("usuarios").document(correo).get()
 
+if not doc_user.exists:
+    st.error("❌ Este correo no está registrado.")
+    st.stop()
+
+rol = doc_user.get("rol").lower()
+
+# === 2️⃣ Define opciones de menú ===
+if rol in ["entrenador", "admin", "administrador"]:
+    opciones = [
+        "Ver Rutinas",
+        "Crear Rutinas",
+        "Editar Rutinas",
+        "Borrar Rutinas",
+        "Evaluaciones",
+        "Admin Rutinas"
+    ]
 else:
-    st.markdown("""
-        <div style='text-align: center; margin-top: 100px;'>
-            <img src='https://i.ibb.co/YL1HbLj/motion-logo.png' width='100'>
-            <h1>Bienvenido a Motion Center</h1>
-            <p style='font-size:18px;'>Selecciona una opción del menú para comenzar</p>
-        </div>
-        """, unsafe_allow_html=True)
+    opciones = ["Ver Rutinas"]
+
+# === 3️⃣ Mostrar menú ===
+opcion = st.sidebar.selectbox("📌 Navegación", opciones)
+
+# === 4️⃣ Mostrar contenido según opción ===
+if opcion == "Ver Rutinas":
+    ver_rutinas.app(correo, rol)
+elif opcion == "Crear Rutinas":
+    crear_rutinas.app()
+elif opcion == "Editar Rutinas":
+    editar_rutinas.app()
+elif opcion == "Borrar Rutinas":
+    borrar_rutinas.app()
+elif opcion == "Evaluaciones":
+    evaluaciones.app()
+elif opcion == "Admin Rutinas":
+    rutinas_admin.app()
