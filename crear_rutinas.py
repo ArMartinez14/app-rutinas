@@ -21,7 +21,7 @@ def crear_rutinas():
     st.markdown("---")
     st.subheader("📋 Usar como base una rutina existente")
 
-    rutinas_docs = db.collection("rutinas").stream()
+    rutinas_docs = db.collection("rutinas_semanales").stream()
     nombres_rutinas = sorted(set(doc.to_dict().get("nombre", "") for doc in rutinas_docs if doc.exists and doc.to_dict().get("nombre", "")))
 
     nombre_rutina_base = st.selectbox("Selecciona cliente con rutina:", [""] + nombres_rutinas)
