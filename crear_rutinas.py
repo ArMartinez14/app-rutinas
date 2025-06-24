@@ -29,7 +29,6 @@ def crear_rutinas():
 
     if st.button("📥 Cargar esta rutina como base"):
         if nombre_rutina_base:
-            # Buscar en la colección correcta
             doc_ref = db.collection("rutinas_semanales").where("cliente", "==", nombre_rutina_base).limit(1).get()
             if doc_ref:
                 rutina_base = doc_ref[0].to_dict()
@@ -38,18 +37,22 @@ def crear_rutinas():
                     "Circuito", "Sección", "Ejercicio", "Series", "Repeticiones",
                     "Peso", "Tiempo", "Velocidad", "RIR", "Tipo"
                 ]
-                for i, dia_nombre in enumerate(dias):
-                    dia_key = f"rutina_dia_{i + 1}"
-                    ejercicios = rutina_base.get(f"dia_{i + 1}", []) or rutina_base.get(f"dia{i + 1}", [])
+
+                # === ✅ Nueva forma de extraer desde el dict 'rutina'
+                rutina_dict = rutina_base.get("rutina", {})
+                for i in range(1, 6):  # días 1 a 5
+                    dia_key = f"rutina_dia_{i}"
+                    ejercicios = rutina_dict.get(str(i), [])  # claves son string: "1", "2", etc.
                     st.session_state[dia_key] = ejercicios if ejercicios else [{k: "" for k in columnas_tabla} for _ in range(8)]
 
                 # Autocompletar nombre y correo
-                st.session_state["nombre_sel"] = rutina_base.get("nombre", "")
+                st.session_state["nombre_sel"] = rutina_base.get("cliente", "")
                 st.session_state["correo_sel"] = rutina_base.get("correo", "")
 
                 st.success(f"✅ Rutina de {nombre_rutina_base} cargada como base.")
             else:
-                st.warning("No se encontró la rutina seleccionada en 'rutinas_semanales'.")
+                st.warning("No se encontró la rutina seleccionada.")
+
 
     st.markdown("---")
 
