@@ -17,7 +17,7 @@ db = firestore.client()
 def crear_rutinas():
     st.title("📝 Crear Nueva Rutina")
 
-    # === 📋 Usar como base una rutina existente desde 'rutinas_semanales'
+    # === 📋 Usar como base una rutina existente ===
     st.markdown("---")
     st.subheader("📋 Usar como base una rutina existente")
 
@@ -42,22 +42,26 @@ def crear_rutinas():
                 rutina_dict = rutina_base.get("rutina", {})
                 for i in range(1, 6):
                     dia_key = f"rutina_dia_{i}"
-                    ejercicios_raw = rutina_dict.get(str(i), [])
+                    ejercicios_raw = rutina_dict.get(str(i), [])  # Clave "1", "2", etc.
                     ejercicios_normalizados = []
-                    for ex in ejercicios_raw:
-                        ejercicios_normalizados.append({
-                            "Circuito": ex.get("circuito", ""),
-                            "Sección": ex.get("bloque", ""),
-                            "Ejercicio": ex.get("ejercicio", ""),
-                            "Series": ex.get("series", ""),
-                            "Repeticiones": ex.get("repeticiones", ""),
-                            "Peso": ex.get("peso", ""),
-                            "Tiempo": ex.get("tiempo", ""),
-                            "Velocidad": ex.get("velocidad", ""),
-                            "RIR": ex.get("rir", ""),
-                            "Tipo": ex.get("tipo", ""),
-                        })
-                    st.session_state[dia_key] = ejercicios_normalizados if ejercicios_normalizados else [{k: "" for k in columnas_tabla} for _ in range(8)]
+                    if ejercicios_raw:
+                        for ex in ejercicios_raw:
+                            ejercicios_normalizados.append({
+                                "Circuito": ex.get("circuito", ""),
+                                "Sección": ex.get("bloque", ""),
+                                "Ejercicio": ex.get("ejercicio", ""),
+                                "Series": ex.get("series", ""),
+                                "Repeticiones": ex.get("repeticiones", ""),
+                                "Peso": ex.get("peso", ""),
+                                "Tiempo": ex.get("tiempo", ""),
+                                "Velocidad": ex.get("velocidad", ""),
+                                "RIR": ex.get("rir", ""),
+                                "Tipo": ex.get("tipo", ""),
+                            })
+                    else:
+                        ejercicios_normalizados = [{k: "" for k in columnas_tabla} for _ in range(8)]
+
+                    st.session_state[dia_key] = ejercicios_normalizados
 
                 st.session_state["nombre_sel"] = rutina_base.get("cliente", "")
                 st.session_state["correo_sel"] = rutina_base.get("correo", "")
