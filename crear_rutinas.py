@@ -42,13 +42,13 @@ def crear_rutinas():
                 rutina_dict = rutina_base.get("rutina", {})
                 for i in range(1, 6):
                     dia_key = f"rutina_dia_{i}"
-                    ejercicios_raw = rutina_dict.get(str(i), [])  # Clave "1", "2", etc.
+                    ejercicios_raw = rutina_dict.get(str(i), [])
                     ejercicios_normalizados = []
                     if ejercicios_raw:
                         for ex in ejercicios_raw:
                             ejercicios_normalizados.append({
-                                "Circuito": ex.get("circuito", ""),
-                                "Sección": ex.get("bloque", ""),
+                                "Circuito": ex.get("circuito", "A"),
+                                "Sección": ex.get("bloque", "Warm Up"),
                                 "Ejercicio": ex.get("ejercicio", ""),
                                 "Series": ex.get("series", ""),
                                 "Repeticiones": ex.get("repeticiones", ""),
