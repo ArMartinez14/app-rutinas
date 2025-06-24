@@ -73,9 +73,9 @@ def crear_rutinas():
                         st.session_state[dia_key] = ejercicios_normalizados
 
                 else:
-                    # Solo 1 día → obtener número del día base y del destino
-                    dia_base_num = int(dia_base_elegido.split()[-1])
-                    dia_destino_num = int(dia_destino.split()[-1])
+                    # Cargar solo 1 día correctamente:
+                    dia_base_num = int(dia_base_elegido.split()[-1])  # por ejemplo "Día 2" → 2
+                    dia_destino_num = int(dia_destino.split()[-1])    # igual para destino
                     ejercicios_raw = rutina_dict.get(str(dia_base_num), [])
                     ejercicios_normalizados = []
                     if ejercicios_raw:
@@ -94,12 +94,15 @@ def crear_rutinas():
                             })
                     else:
                         ejercicios_normalizados = [{k: "" for k in columnas_tabla} for _ in range(8)]
+
                     dia_key = f"rutina_dia_{dia_destino_num}"
                     st.session_state[dia_key] = ejercicios_normalizados
 
                 st.session_state["nombre_sel"] = rutina_base.get("cliente", "")
                 st.session_state["correo_sel"] = rutina_base.get("correo", "")
-                st.success(f"✅ {dia_base_elegido} de {nombre_rutina_base} cargado en {dia_destino if dia_destino else 'Todos los días'}")
+                st.success(f"✅ {dia_base_elegido} cargado en {dia_destino if dia_destino else 'Todos los días'}")
+                
+                # Forzar refresco UI para que se dibuje el día correcto:
                 st.rerun()
             else:
                 st.warning("No se encontró la rutina seleccionada.")
