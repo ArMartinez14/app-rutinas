@@ -33,12 +33,14 @@ def ver_rutinas():
         return orden.get(ejercicio.get("circuito", ""), 99)
 
     @st.cache_data
+
     def cargar_rutinas_filtradas(correo, rol):
         if es_entrenador(rol):
-            docs = db.collection("rutinas_semanales").stream()
+            docs = db.collection("rutinas_semanales").get()
         else:
-            docs = db.collection("rutinas_semanales").where("correo", "==", correo).stream()
+            docs = db.collection("rutinas_semanales").where("correo", "==", correo).get()
         return [doc.to_dict() for doc in docs]
+
 
     # === INPUT CORREO ===
     correo_input = st.text_input("🔑 Ingresa tu correo:", key="correo_input")
