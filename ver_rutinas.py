@@ -191,5 +191,5 @@ def app(correo_raw, rol):
                     st.warning(f"⚠️ Error aplicando delta: {inner_error}")
 
     except Exception as error:
-        st.error("❌ Error al guardar.")
-        st.exception(error)
+            st.error("❌ Error al guardar.")
+            st.exception(error)
