@@ -21,25 +21,33 @@ def crear_rutinas():
     st.markdown("---")
     st.subheader("📋 Usar como base una rutina existente")
 
+    # 1️⃣ Seleccionar cliente
     rutinas_docs = db.collection("rutinas_semanales").stream()
     nombres_rutinas = sorted(set(
         doc.to_dict().get("cliente", "") for doc in rutinas_docs if doc.exists and doc.to_dict().get("cliente", "")
     ))
-
     nombre_rutina_base = st.selectbox("Selecciona cliente con rutina:", [""] + nombres_rutinas)
-    dias_opciones = ["Todos los días"] + ["Día 1", "Día 2", "Día 3", "Día 4", "Día 5"]
-    dia_base_elegido = st.selectbox("¿Qué día quieres cargar de la rutina base?", dias_opciones)
 
-    if st.button("📥 Cargar esta rutina como base"):
+    # 2️⃣ Elegir qué día de la base quieres copiar
+    dias_opciones = ["Todos los días"] + ["Día 1", "Día 2", "Día 3", "Día 4", "Día 5"]
+    dia_base_elegido = st.selectbox("¿Qué día quieres copiar de la rutina base?", dias_opciones)
+
+    # 3️⃣ Si elijes solo 1 día, decide a qué día destino quieres copiarlo:
+    if dia_base_elegido != "Todos los días":
+        dia_destino = st.selectbox("¿A qué día quieres aplicarlo en esta rutina?", ["Día 1", "Día 2", "Día 3", "Día 4", "Día 5"])
+    else:
+        dia_destino = None  # no aplica
+
+    if st.button("📥 Cargar rutina seleccionada"):
         if nombre_rutina_base:
             doc_ref = db.collection("rutinas_semanales").where("cliente", "==", nombre_rutina_base).limit(1).get()
             if doc_ref:
                 rutina_base = doc_ref[0].to_dict()
+                rutina_dict = rutina_base.get("rutina", {})
                 columnas_tabla = [
                     "Circuito", "Sección", "Ejercicio", "Series", "Repeticiones",
                     "Peso", "Tiempo", "Velocidad", "RIR", "Tipo"
                 ]
-                rutina_dict = rutina_base.get("rutina", {})
 
                 if dia_base_elegido == "Todos los días":
                     for i in range(1, 6):
@@ -65,10 +73,10 @@ def crear_rutinas():
                         st.session_state[dia_key] = ejercicios_normalizados
 
                 else:
-                    # Solo un día específico:
-                    dia_num = int(dia_base_elegido.split()[-1])  # Extrae el número del texto "Día X"
-                    dia_key = f"rutina_dia_{dia_num}"
-                    ejercicios_raw = rutina_dict.get(str(dia_num), [])
+                    # Solo 1 día → obtener número del día base y del destino
+                    dia_base_num = int(dia_base_elegido.split()[-1])
+                    dia_destino_num = int(dia_destino.split()[-1])
+                    ejercicios_raw = rutina_dict.get(str(dia_base_num), [])
                     ejercicios_normalizados = []
                     if ejercicios_raw:
                         for ex in ejercicios_raw:
@@ -86,13 +94,15 @@ def crear_rutinas():
                             })
                     else:
                         ejercicios_normalizados = [{k: "" for k in columnas_tabla} for _ in range(8)]
+                    dia_key = f"rutina_dia_{dia_destino_num}"
                     st.session_state[dia_key] = ejercicios_normalizados
 
                 st.session_state["nombre_sel"] = rutina_base.get("cliente", "")
                 st.session_state["correo_sel"] = rutina_base.get("correo", "")
-                st.success(f"✅ Rutina de {nombre_rutina_base} cargada: {dia_base_elegido.lower()}.")
-
-
+                st.success(f"✅ {dia_base_elegido} de {nombre_rutina_base} cargado en {dia_destino if dia_destino else 'Todos los días'}")
+                st.rerun()
+            else:
+                st.warning("No se encontró la rutina seleccionada.")
 
     st.markdown("---")
 
@@ -141,7 +151,6 @@ def crear_rutinas():
 
             for idx, fila in enumerate(st.session_state[dia_key]):
                 st.markdown(f"##### Ejercicio {idx + 1}")
-
                 cols = st.columns(14)
                 fila["Circuito"] = cols[0].selectbox(
                     "",
@@ -223,68 +232,6 @@ def crear_rutinas():
                         )
 
     st.markdown("---")
-
-    if st.button("🔍 Previsualizar rutina"):
-        st.session_state["mostrar_preview"] = True
-
-    if st.session_state.get("mostrar_preview", False):
-        st.subheader("📅 Previsualización de todas las semanas con progresiones aplicadas")
-
-        for semana_idx in range(1, int(semanas) + 1):
-            with st.expander(f"Semana {semana_idx}"):
-                for i, dia_nombre in enumerate(dias):
-                    dia_key = f"rutina_dia_{i + 1}"
-                    ejercicios = st.session_state.get(dia_key, [])
-                    if not ejercicios:
-                        continue
-
-                    st.write(f"**{dia_nombre}**")
-
-                    tabla = []
-                    for ejercicio in ejercicios:
-                        ejercicio_mod = ejercicio.copy()
-
-                        circuito = ejercicio.get("Circuito", "")
-                        ejercicio_mod["Sección"] = "Warm Up" if circuito in ["A", "B", "C"] else "Work Out"
-
-                        for p in range(1, 4):
-                            variable = ejercicio.get(f"progresion_{p}_variable", "").strip().lower()
-                            cantidad = ejercicio.get(f"progresion_{p}_cantidad", "")
-                            operacion = ejercicio.get(f"progresion_{p}_operacion", "").strip().lower()
-                            semanas_txt = ejercicio.get(f"progresion_{p}_semanas", "")
-
-                            if variable and operacion and cantidad:
-                                valor_base = ejercicio_mod.get(variable.capitalize(), "")
-                                if valor_base:
-                                    valor_actual = valor_base
-                                    try:
-                                        semanas_aplicar = [int(s.strip()) for s in semanas_txt.split(",") if s.strip().isdigit()]
-                                    except:
-                                        semanas_aplicar = []
-                                    try:
-                                        cantidad_float = float(cantidad)
-                                    except (ValueError, TypeError):
-                                        cantidad_float = 0
-
-                                    for s in range(2, semana_idx + 1):
-                                        if s in semanas_aplicar:
-                                            valor_actual = aplicar_progresion(valor_actual, cantidad_float, operacion)
-                                    ejercicio_mod[variable.capitalize()] = valor_actual
-
-                        tabla.append({
-                            "bloque": ejercicio_mod["Sección"],
-                            "circuito": ejercicio_mod["Circuito"],
-                            "ejercicio": ejercicio_mod["Ejercicio"],
-                            "series": ejercicio_mod["Series"],
-                            "repeticiones": ejercicio_mod["Repeticiones"],
-                            "peso": ejercicio_mod["Peso"],
-                            "tiempo": ejercicio_mod["Tiempo"],
-                            "velocidad": ejercicio_mod["Velocidad"],
-                            "rir": ejercicio_mod["RIR"],
-                            "tipo": ejercicio_mod["Tipo"]
-                        })
-
-                    st.dataframe(tabla, use_container_width=True)
 
     if st.button("✅ Generar rutina completa"):
         guardar_rutina(nombre_sel, correo, entrenador, fecha_inicio, semanas, dias)
